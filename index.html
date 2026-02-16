@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EyeAble - Student</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #dc3545;
+      padding: 10px 20px;
+      z-index: 1000;
+    }
+    
+    .logout-btn:hover {
+      background-color: #c82333;
+    }
+    
+    .user-info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-weight: bold;
+      color: #333;
+      background: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 10000;
+    }
+  </style>
+</head>
+<body>
+  <div class="user-info" id="userInfo"></div>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+
+  <h1>👁️ EyeAble - Student Portal</h1>
+
+  <h2>Question:</h2>
+  <p id="questionText">Loading question...</p>
+
+  <textarea id="output" rows="3" placeholder="Your answer will appear here..."></textarea>
+
+  <div id="keyboard"></div>
+
+  <br>
+  <button onclick="submitAnswer()">Submit Answer</button>
+
+  <div class="loading" id="loading">Loading eye tracking... Please allow camera access.</div>
+
+  <!-- Load WebGazer first -->
+  <script src="https://cdn.jsdelivr.net/npm/webgazer@2.1.0/dist/webgazer.min.js"></script>
+  
+  <script>
+    // Check if user is logged in - redirect to login if not
+    (function() {
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      const role = localStorage.getItem('role');
+      
+      if (isLoggedIn !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // If user is teacher, they shouldn't be on student page
+      if (role !== 'student') {
+        window.location.href = 'teacher.html';
+        return;
+      }
+    })();
+    
+    // Display user info
+    const username = localStorage.getItem('username');
+    document.getElementById('userInfo').innerText = `Logged in as: ${username} (Student)`;
+    
+    function logout() {
+      // Stop webgazer before logging out
+      if (window.webgazer && typeof webgazer.end === 'function') {
+        try {
+          webgazer.end();
+        } catch (e) {
+          console.log('Error stopping webgazer:', e);
+        }
+      }
+      
+      // Clear all localStorage items
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      localStorage.removeItem('answer');
+      
+      // Redirect to login
+      window.location.href = 'login.html';
+    }
+
+    // Hide loading when page is loaded
+    window.addEventListener('load', function() {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) loading.style.display = 'none';
+      }, 3000);
+    });
+  </script>
+  
+  <!-- Load script.js after WebGazer -->
+  <script src="script.js"></script>
+</body>
+</html>

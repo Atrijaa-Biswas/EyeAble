@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EyeAble - Login</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      width: 350px;
+      text-align: center;
+    }
+    
+    .login-container h1 {
+      margin-top: 0;
+      color: #333;
+      font-size: 32px;
+    }
+    
+    .login-container h2 {
+      color: #666;
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: bold;
+    }
+    
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    }
+    
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .role-selector {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
+    
+    .role-btn {
+      flex: 1;
+      padding: 12px;
+      margin: 0 5px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .role-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .role-btn.teacher.active {
+      background: #28a745;
+      border-color: #28a745;
+    }
+    
+    .role-btn.student.active {
+      background: #007bff;
+      border-color: #007bff;
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .login-btn:hover {
+      background: #5a67d8;
+    }
+    
+    .error-message {
+      color: #dc3545;
+      margin-top: 15px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .demo-credentials {
+      margin-top: 25px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .demo-credentials p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>👁️ EyeAble</h1>
+    <h2>Login</h2>
+    
+    <div class="input-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter username" value="student">
+    </div>
+    
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password" value="password123">
+    </div>
+    
+    <div class="role-selector">
+      <button class="role-btn teacher" onclick="setRole('teacher')">👩‍🏫 Teacher</button>
+      <button class="role-btn student active" onclick="setRole('student')">👨‍🎓 Student</button>
+    </div>
+    
+    <button class="login-btn" onclick="login()">Login</button>
+    
+    <div class="error-message" id="errorMessage">Invalid username or password</div>
+    
+    <div class="demo-credentials">
+      <p><strong>Demo Credentials:</strong></p>
+      <p>👩‍🏫 Teacher: teacher / password123</p>
+      <p>👨‍🎓 Student: student / password123</p>
+    </div>
+  </div>
+
+  <script>
+    let selectedRole = 'student';
+    
+    function setRole(role) {
+      selectedRole = role;
+      
+      // Update button styles
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      if (role === 'teacher') {
+        document.querySelector('.role-btn.teacher').classList.add('active');
+      } else {
+        document.querySelector('.role-btn.student').classList.add('active');
+      }
+    }
+    
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMessage = document.getElementById('errorMessage');
+      
+      // Simple demo authentication
+      if ((username === 'teacher' && password === 'password123') || 
+          (username === 'student' && password === 'password123')) {
+        
+        // Store user info in localStorage
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('username', username);
+        localStorage.setItem('role', selectedRole);
+        
+        // Redirect based on selected role
+        if (selectedRole === 'teacher') {
+          window.location.href = 'teacher.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+      } else {
+        errorMessage.style.display = 'block';
+      }
+    }
+    
+    // Clear any existing login data when loading login page
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('username');
+    localStorage.removeItem('role');
+  </script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teacher Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #dc3545;
+      padding: 10px 20px;
+      z-index: 1000;
+    }
+    
+    .logout-btn:hover {
+      background-color: #c82333;
+    }
+    
+    .user-info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-weight: bold;
+      color: #333;
+      background: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 80px auto 20px;
+      padding: 20px;
+    }
+    
+    #questionInput {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      resize: vertical;
+    }
+    
+    .answer-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      border: 2px solid #28a745;
+      margin-top: 20px;
+    }
+    
+    .student-answer {
+      font-size: 24px;
+      font-weight: bold;
+      color: #28a745;
+      min-height: 50px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    
+    .timestamp {
+      color: #666;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    
+    .status.connected {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .button-group button {
+      flex: 1;
+    }
+    
+    .refresh-btn {
+      background-color: #007bff;
+    }
+    
+    .refresh-btn:hover {
+      background-color: #0056b3;
+    }
+    
+    .clear-btn {
+      background-color: #6c757d;
+    }
+    
+    .clear-btn:hover {
+      background-color: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <div class="user-info" id="userInfo"></div>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+  
+  <div class="container">
+    <h1>👩‍🏫 Teacher Dashboard</h1>
+    
+    <div class="status" id="connectionStatus">Checking connection...</div>
+
+    <textarea id="questionInput" placeholder="Enter question here (e.g., Type the word: CAT)" rows="4">Type the word: CAT</textarea>
+    
+    <div class="button-group">
+      <button onclick="saveQuestion()">💾 Save Question</button>
+      <button class="refresh-btn" onclick="loadAnswer()">🔄 Refresh Answer</button>
+      <button class="clear-btn" onclick="clearAnswer()">🗑️ Clear Answer</button>
+    </div>
+
+    <h2>Student Answer:</h2>
+    <div class="answer-container">
+      <div class="student-answer" id="studentAnswer">No answer yet</div>
+      <div class="timestamp" id="answerTimestamp"></div>
+    </div>
+    
+    <div style="margin-top: 20px; padding: 10px; background: #e9ecef; border-radius: 5px;">
+      <h3>Debug Info:</h3>
+      <div id="debugInfo"></div>
+    </div>
+  </div>
+
+  <script>
+    // Check if user is logged in and is a teacher
+    (function() {
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      const role = localStorage.getItem('role');
+      
+      if (isLoggedIn !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // If user is student, they shouldn't be on teacher page
+      if (role !== 'teacher') {
+        window.location.href = 'index.html';
+        return;
+      }
+    })();
+    
+    // Display user info
+    const username = localStorage.getItem('username');
+    document.getElementById('userInfo').innerText = `Logged in as: ${username} (Teacher)`;
+    
+    // Load any existing question
+    const savedQuestion = localStorage.getItem('question');
+    if (savedQuestion) {
+      document.getElementById('questionInput').value = savedQuestion;
+    }
+    
+    function saveQuestion() {
+      let q = document.getElementById("questionInput").value;
+      localStorage.setItem("question", q);
+      alert("Question Saved! Students will now see: " + q);
+      updateDebugInfo();
+    }
+    
+    function loadAnswer() {
+      // Get answer from localStorage
+      let ans = localStorage.getItem("answer");
+      let timestamp = localStorage.getItem("answer_timestamp");
+      
+      // Update the display
+      const answerElement = document.getElementById("studentAnswer");
+      const timestampElement = document.getElementById("answerTimestamp");
+      
+      if (ans && ans.trim() !== "") {
+        answerElement.innerText = ans;
+        answerElement.style.color = "#28a745";
+        if (timestamp) {
+          timestampElement.innerText = "Last submitted: " + timestamp;
+        } else {
+          timestampElement.innerText = "Submitted";
+        }
+        
+        // Update connection status
+        document.getElementById("connectionStatus").innerHTML = "✅ Student connected - Answer received";
+        document.getElementById("connectionStatus").className = "status connected";
+      } else {
+        answerElement.innerText = "No answer yet";
+        answerElement.style.color = "#666";
+        timestampElement.innerText = "";
+        
+        // Update connection status
+        document.getElementById("connectionStatus").innerHTML = "⏳ Waiting for student answer...";
+        document.getElementById("connectionStatus").className = "status disconnected";
+      }
+      
+      updateDebugInfo();
+    }
+    
+    function clearAnswer() {
+      localStorage.removeItem("answer");
+      localStorage.removeItem("answer_timestamp");
+      loadAnswer();
+      alert("Answer cleared");
+    }
+    
+    function updateDebugInfo() {
+      const debug = document.getElementById("debugInfo");
+      debug.innerHTML = `
+        <strong>LocalStorage Contents:</strong><br>
+        Question: ${localStorage.getItem('question') || 'Not set'}<br>
+        Answer: ${localStorage.getItem('answer') || 'Not set'}<br>
+        Timestamp: ${localStorage.getItem('answer_timestamp') || 'Not set'}<br>
+        IsLoggedIn: ${localStorage.getItem('isLoggedIn')}<br>
+        Role: ${localStorage.getItem('role')}
+      `;
+    }
+    
+    function logout() {
+      // Clear login data but keep question and answer
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      
+      // Redirect to login
+      window.location.href = 'login.html';
+    }
+
+    // Load answer immediately
+    loadAnswer();
+    
+    // Check for new answers every 2 seconds
+    setInterval(loadAnswer, 2000);
+    
+    // Also check when page gets focus
+    window.addEventListener('focus', loadAnswer);
+    
+    console.log("Teacher dashboard initialized");
+  </script>
+</body>
+</html>
