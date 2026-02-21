@@ -46,213 +46,332 @@
       resize: vertical;
     }
     
-    .answer-container {
+    .student-answer {
       background: white;
       padding: 20px;
       border-radius: 10px;
       border: 2px solid #28a745;
+      min-height: 100px;
+      font-size: 18px;
       margin-top: 20px;
-    }
-    
-    .student-answer {
-      font-size: 24px;
-      font-weight: bold;
-      color: #28a745;
-      min-height: 50px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      margin: 10px 0;
-    }
-    
-    .timestamp {
-      color: #666;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-    
-    .status {
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-    }
-    
-    .status.connected {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    
-    .status.disconnected {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    
-    .button-group button {
-      flex: 1;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
     
     .refresh-btn {
       background-color: #007bff;
+      margin-left: 10px;
     }
     
     .refresh-btn:hover {
       background-color: #0056b3;
     }
-    
-    .clear-btn {
-      background-color: #6c757d;
+
+    .answers-container {
+      margin-top: 30px;
     }
-    
+
+    .answer-card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .answer-card strong {
+      color: #28a745;
+    }
+
+    .answer-card small {
+      color: #666;
+      display: block;
+      margin-top: 5px;
+    }
+
+    .stats {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .clear-btn {
+      background-color: #dc3545;
+      margin-left: 10px;
+    }
+
     .clear-btn:hover {
-      background-color: #5a6268;
+      background-color: #c82333;
     }
   </style>
 </head>
 <body>
-  <div class="user-info" id="userInfo"></div>
+  <div class="user-info" id="userInfo">Loading user info...</div>
   <button class="logout-btn" onclick="logout()">Logout</button>
   
   <div class="container">
     <h1>👩‍🏫 Teacher Dashboard</h1>
-    
-    <div class="status" id="connectionStatus">Checking connection...</div>
+
+    <div class="stats" id="stats">
+      Loading statistics...
+    </div>
 
     <textarea id="questionInput" placeholder="Enter question here (e.g., Type the word: CAT)" rows="4">Type the word: CAT</textarea>
-    
-    <div class="button-group">
-      <button onclick="saveQuestion()">💾 Save Question</button>
-      <button class="refresh-btn" onclick="loadAnswer()">🔄 Refresh Answer</button>
-      <button class="clear-btn" onclick="clearAnswer()">🗑️ Clear Answer</button>
-    </div>
+    <br>
+    <button onclick="saveQuestion()">Save Question</button>
+    <button class="refresh-btn" onclick="loadAnswers()">Refresh Answers</button>
+    <button class="clear-btn" onclick="clearAllAnswers()">Clear All Answers</button>
 
-    <h2>Student Answer:</h2>
-    <div class="answer-container">
-      <div class="student-answer" id="studentAnswer">No answer yet</div>
-      <div class="timestamp" id="answerTimestamp"></div>
-    </div>
-    
-    <div style="margin-top: 20px; padding: 10px; background: #e9ecef; border-radius: 5px;">
-      <h3>Debug Info:</h3>
-      <div id="debugInfo"></div>
+    <h2>Current Student Answer:</h2>
+    <div class="student-answer" id="currentStudentAnswer">No answer yet</div>
+
+    <div class="answers-container">
+      <h2>All Student Answers:</h2>
+      <div id="allAnswers">Loading answers...</div>
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
   <script>
-    // Check if user is logged in and is a teacher
-    (function() {
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      const role = localStorage.getItem('role');
-      
-      if (isLoggedIn !== 'true') {
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
+      authDomain: "eyeable-2026.firebaseapp.com",
+      databaseURL: "https://eyeable-2026-default-rtdb.firebaseio.com",
+      projectId: "eyeable-2026",
+      storageBucket: "eyeable-2026.firebasestorage.app",
+      messagingSenderId: "29944050006",
+      appId: "1:29944050006:web:33515697c3aac35432e6f7",
+      measurementId: "G-YMPV5EPEDV"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // Check authentication status
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // No user logged in, redirect to login
         window.location.href = 'login.html';
         return;
       }
-      
-      // If user is student, they shouldn't be on teacher page
-      if (role !== 'teacher') {
-        window.location.href = 'index.html';
-        return;
-      }
-    })();
-    
-    // Display user info
-    const username = localStorage.getItem('username');
-    document.getElementById('userInfo').innerText = `Logged in as: ${username} (Teacher)`;
-    
-    // Load any existing question
-    const savedQuestion = localStorage.getItem('question');
-    if (savedQuestion) {
-      document.getElementById('questionInput').value = savedQuestion;
-    }
-    
-    function saveQuestion() {
-      let q = document.getElementById("questionInput").value;
-      localStorage.setItem("question", q);
-      alert("Question Saved! Students will now see: " + q);
-      updateDebugInfo();
-    }
-    
-    function loadAnswer() {
-      // Get answer from localStorage
-      let ans = localStorage.getItem("answer");
-      let timestamp = localStorage.getItem("answer_timestamp");
-      
-      // Update the display
-      const answerElement = document.getElementById("studentAnswer");
-      const timestampElement = document.getElementById("answerTimestamp");
-      
-      if (ans && ans.trim() !== "") {
-        answerElement.innerText = ans;
-        answerElement.style.color = "#28a745";
-        if (timestamp) {
-          timestampElement.innerText = "Last submitted: " + timestamp;
-        } else {
-          timestampElement.innerText = "Submitted";
-        }
-        
-        // Update connection status
-        document.getElementById("connectionStatus").innerHTML = "✅ Student connected - Answer received";
-        document.getElementById("connectionStatus").className = "status connected";
-      } else {
-        answerElement.innerText = "No answer yet";
-        answerElement.style.color = "#666";
-        timestampElement.innerText = "";
-        
-        // Update connection status
-        document.getElementById("connectionStatus").innerHTML = "⏳ Waiting for student answer...";
-        document.getElementById("connectionStatus").className = "status disconnected";
-      }
-      
-      updateDebugInfo();
-    }
-    
-    function clearAnswer() {
-      localStorage.removeItem("answer");
-      localStorage.removeItem("answer_timestamp");
-      loadAnswer();
-      alert("Answer cleared");
-    }
-    
-    function updateDebugInfo() {
-      const debug = document.getElementById("debugInfo");
-      debug.innerHTML = `
-        <strong>LocalStorage Contents:</strong><br>
-        Question: ${localStorage.getItem('question') || 'Not set'}<br>
-        Answer: ${localStorage.getItem('answer') || 'Not set'}<br>
-        Timestamp: ${localStorage.getItem('answer_timestamp') || 'Not set'}<br>
-        IsLoggedIn: ${localStorage.getItem('isLoggedIn')}<br>
-        Role: ${localStorage.getItem('role')}
-      `;
-    }
-    
-    function logout() {
-      // Clear login data but keep question and answer
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('username');
-      localStorage.removeItem('role');
-      
-      // Redirect to login
-      window.location.href = 'login.html';
+
+      // Check if user is a teacher
+      database.ref('users/' + user.uid).once('value')
+        .then((snapshot) => {
+          const userData = snapshot.val();
+          if (!userData || userData.role !== 'teacher') {
+            // Wrong role or no role, redirect to appropriate page
+            if (userData && userData.role === 'student') {
+              window.location.href = 'index.html';
+            } else {
+              // No role assigned, redirect to login
+              auth.signOut();
+              window.location.href = 'login.html';
+            }
+            return;
+          }
+
+          // Display user info
+          const displayName = userData.name || user.displayName || user.email;
+          document.getElementById('userInfo').innerText = `Logged in as: ${displayName} (Teacher)`;
+          
+          // Load existing question
+          loadExistingQuestion();
+          
+          // Load answers
+          loadAnswers();
+          
+          // Set up real-time listener for answers
+          setupAnswersListener();
+        })
+        .catch((error) => {
+          console.error('Error checking user role:', error);
+        });
+    });
+
+    // Load existing question
+    function loadExistingQuestion() {
+      database.ref('currentQuestion').once('value')
+        .then((snapshot) => {
+          const question = snapshot.val();
+          if (question) {
+            document.getElementById('questionInput').value = question;
+          } else {
+            // Try localStorage as fallback
+            const savedQuestion = localStorage.getItem('question');
+            if (savedQuestion) {
+              document.getElementById('questionInput').value = savedQuestion;
+            }
+          }
+        })
+        .catch((error) => {
+          console.error('Error loading question:', error);
+        });
     }
 
-    // Load answer immediately
-    loadAnswer();
-    
-    // Check for new answers every 2 seconds
-    setInterval(loadAnswer, 2000);
-    
-    // Also check when page gets focus
-    window.addEventListener('focus', loadAnswer);
-    
-    console.log("Teacher dashboard initialized");
+    function saveQuestion() {
+      const question = document.getElementById("questionInput").value;
+      
+      // Save to Firebase
+      database.ref('currentQuestion').set(question)
+        .then(() => {
+          // Also save to localStorage as backup
+          localStorage.setItem("question", question);
+          alert("Question Saved! Students will now see: " + question);
+        })
+        .catch((error) => {
+          console.error('Error saving question:', error);
+          alert("Error saving question. Please try again.");
+        });
+    }
+
+    function loadAnswers() {
+      // Load the most recent answer (for backward compatibility)
+      database.ref('answers').orderByKey().limitToLast(1).once('value')
+        .then((snapshot) => {
+          const answers = snapshot.val();
+          if (answers) {
+            // Get the most recent answer
+            const latestAnswerKey = Object.keys(answers).pop();
+            const latestAnswer = answers[latestAnswerKey];
+            document.getElementById('currentStudentAnswer').innerText = 
+              latestAnswer.text || "No answer yet";
+          } else {
+            // Fallback to localStorage
+            const localAnswer = localStorage.getItem("answer");
+            document.getElementById('currentStudentAnswer').innerText = localAnswer || "No answer yet";
+          }
+        })
+        .catch((error) => {
+          console.error('Error loading answers:', error);
+          // Fallback to localStorage
+          const localAnswer = localStorage.getItem("answer");
+          document.getElementById('currentStudentAnswer').innerText = localAnswer || "No answer yet";
+        });
+
+      // Load all answers for display
+      loadAllAnswers();
+      updateStats();
+    }
+
+    function loadAllAnswers() {
+      database.ref('answers').once('value')
+        .then((snapshot) => {
+          const answers = snapshot.val();
+          const allAnswersDiv = document.getElementById('allAnswers');
+          
+          if (!answers) {
+            allAnswersDiv.innerHTML = '<p>No answers yet</p>';
+            return;
+          }
+
+          // Convert to array and sort by timestamp (newest first)
+          const answersArray = Object.entries(answers).map(([key, value]) => ({
+            id: key,
+            ...value
+          })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+          let html = '';
+          answersArray.forEach(answer => {
+            const date = answer.timestamp ? new Date(answer.timestamp).toLocaleString() : 'Unknown date';
+            const studentName = answer.studentName || answer.studentEmail || 'Unknown student';
+            
+            html += `
+              <div class="answer-card">
+                <strong>${studentName}</strong>
+                <p>${answer.text || ''}</p>
+                <small>Submitted: ${date}</small>
+              </div>
+            `;
+          });
+
+          allAnswersDiv.innerHTML = html;
+        })
+        .catch((error) => {
+          console.error('Error loading all answers:', error);
+          document.getElementById('allAnswers').innerHTML = '<p>Error loading answers</p>';
+        });
+    }
+
+    function updateStats() {
+      database.ref('answers').once('value')
+        .then((snapshot) => {
+          const answers = snapshot.val();
+          const totalAnswers = answers ? Object.keys(answers).length : 0;
+          
+          // Get unique students
+          const uniqueStudents = new Set();
+          if (answers) {
+            Object.values(answers).forEach(answer => {
+              if (answer.studentId) uniqueStudents.add(answer.studentId);
+            });
+          }
+
+          document.getElementById('stats').innerHTML = `
+            <strong>Statistics:</strong><br>
+            Total Answers: ${totalAnswers}<br>
+            Active Students: ${uniqueStudents.size}
+          `;
+        })
+        .catch((error) => {
+          console.error('Error updating stats:', error);
+        });
+    }
+
+    function setupAnswersListener() {
+      // Listen for new answers in real-time
+      database.ref('answers').on('child_added', () => {
+        loadAllAnswers();
+        updateStats();
+        loadAnswers(); // Update current answer
+      });
+    }
+
+    function clearAllAnswers() {
+      if (confirm('Are you sure you want to clear all answers? This cannot be undone.')) {
+        database.ref('answers').remove()
+          .then(() => {
+            localStorage.removeItem('answer');
+            document.getElementById('currentStudentAnswer').innerText = 'No answer yet';
+            document.getElementById('allAnswers').innerHTML = '<p>No answers yet</p>';
+            updateStats();
+            alert('All answers cleared successfully');
+          })
+          .catch((error) => {
+            console.error('Error clearing answers:', error);
+            alert('Error clearing answers. Please try again.');
+          });
+      }
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        // Clear login data but keep question
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('username');
+        localStorage.removeItem('role');
+        
+        // Redirect to login
+        window.location.href = 'login.html';
+      }).catch((error) => {
+        console.error('Logout error:', error);
+        // Force redirect even if signout fails
+        localStorage.clear();
+        window.location.href = 'login.html';
+      });
+    }
+
+    // Load answers initially and set up periodic refresh
+    loadAnswers();
+    setInterval(loadAnswers, 5000); // Refresh every 5 seconds
   </script>
 </body>
 </html>

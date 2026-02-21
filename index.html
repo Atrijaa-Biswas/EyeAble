@@ -41,10 +41,98 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       z-index: 10000;
     }
+
+    /* Keyboard styles - with larger boxes and proper SPACE/BACK sizing */
+    #keyboard {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 12px;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 25px;
+      background: #f0f0f0;
+      border-radius: 15px;
+    }
+
+    .key {
+      padding: 25px 10px;
+      font-size: 24px;
+      font-weight: bold;
+      border: 3px solid #444;
+      border-radius: 12px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 60px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      grid-column: span 1;
+    }
+
+    .key.space-key {
+      grid-column: span 4;
+      background-color: #e8e8e8;
+    }
+
+    .key.back-key {
+      grid-column: span 2;
+      background-color: #ffebeb;
+    }
+
+    .key:hover {
+      background: #e0e0e0;
+      transform: scale(1.05);
+    }
+
+    .key.space-key:hover {
+      background: #d8d8d8;
+    }
+
+    .key.back-key:hover {
+      background: #ffd6d6;
+    }
+
+    .key.active {
+      background: #ffd700;
+      border-color: #ffa500;
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+
+    textarea#output {
+      width: 80%;
+      max-width: 600px;
+      padding: 15px;
+      font-size: 18px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      margin: 20px auto;
+      display: block;
+      resize: vertical;
+    }
+
+    button {
+      padding: 12px 30px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    h1, h2, p {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div class="user-info" id="userInfo"></div>
+  <div class="user-info" id="userInfo">Loading user info...</div>
   <button class="logout-btn" onclick="logout()">Logout</button>
 
   <h1>👁️ EyeAble - Student Portal</h1>
@@ -57,35 +145,96 @@
   <div id="keyboard"></div>
 
   <br>
-  <button onclick="submitAnswer()">Submit Answer</button>
+  <div style="text-align: center;">
+    <button onclick="submitAnswer()">Submit Answer</button>
+    <button onclick="clearAnswer()" style="background: #6c757d;">Clear</button>
+  </div>
 
   <div class="loading" id="loading">Loading eye tracking... Please allow camera access.</div>
 
-  <!-- Load WebGazer first -->
+  <!-- Load Firebase first -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  
+  <!-- Load WebGazer -->
   <script src="https://cdn.jsdelivr.net/npm/webgazer@2.1.0/dist/webgazer.min.js"></script>
   
   <script>
-    // Check if user is logged in - redirect to login if not
-    (function() {
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      const role = localStorage.getItem('role');
-      
-      if (isLoggedIn !== 'true') {
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
+      authDomain: "eyeable-2026.firebaseapp.com",
+      databaseURL: "https://eyeable-2026-default-rtdb.firebaseio.com",
+      projectId: "eyeable-2026",
+      storageBucket: "eyeable-2026.firebasestorage.app",
+      messagingSenderId: "29944050006",
+      appId: "1:29944050006:web:33515697c3aac35432e6f7",
+      measurementId: "G-YMPV5EPEDV"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // Make Firebase available globally
+    window.firebase = firebase;
+    window.database = database;
+
+    // Check authentication status
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // No user logged in, redirect to login
         window.location.href = 'login.html';
         return;
       }
-      
-      // If user is teacher, they shouldn't be on student page
-      if (role !== 'student') {
-        window.location.href = 'teacher.html';
-        return;
-      }
-    })();
-    
-    // Display user info
-    const username = localStorage.getItem('username');
-    document.getElementById('userInfo').innerText = `Logged in as: ${username} (Student)`;
-    
+
+      // Check if user is a student
+      database.ref('users/' + user.uid).once('value')
+        .then((snapshot) => {
+          const userData = snapshot.val();
+          
+          // If user data doesn't exist or role is missing, create it with student role
+          if (!userData) {
+            // Create user record with student role
+            return database.ref('users/' + user.uid).set({
+              name: user.displayName || user.email,
+              email: user.email,
+              role: 'student',
+              createdAt: new Date().toISOString()
+            }).then(() => {
+              // Display user info
+              const displayName = user.displayName || user.email;
+              document.getElementById('userInfo').innerText = `Logged in as: ${displayName} (Student)`;
+            });
+          }
+          
+          // Check role
+          if (userData.role !== 'student') {
+            // Wrong role, redirect to appropriate page
+            if (userData.role === 'teacher') {
+              window.location.href = 'teacher.html';
+            } else {
+              // Invalid role, sign out and redirect to login
+              auth.signOut();
+              window.location.href = 'login.html';
+            }
+            return;
+          }
+
+          // Display user info
+          const displayName = userData.name || user.displayName || user.email;
+          document.getElementById('userInfo').innerText = `Logged in as: ${displayName} (Student)`;
+        })
+        .catch((error) => {
+          console.error('Error checking user role:', error);
+          // If error occurs, still show the page but with limited info
+          const displayName = user.displayName || user.email;
+          document.getElementById('userInfo').innerText = `Logged in as: ${displayName}`;
+        });
+    });
+
     function logout() {
       // Stop webgazer before logging out
       if (window.webgazer && typeof webgazer.end === 'function') {
@@ -95,15 +244,20 @@
           console.log('Error stopping webgazer:', e);
         }
       }
-      
-      // Clear all localStorage items
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('username');
-      localStorage.removeItem('role');
-      localStorage.removeItem('answer');
-      
-      // Redirect to login
-      window.location.href = 'login.html';
+
+      // Sign out from Firebase
+      auth.signOut().then(() => {
+        // Clear localStorage
+        localStorage.removeItem('question');
+        localStorage.removeItem('answer');
+        // Redirect to login
+        window.location.href = 'login.html';
+      }).catch((error) => {
+        console.error('Logout error:', error);
+        // Force redirect even if signout fails
+        localStorage.clear();
+        window.location.href = 'login.html';
+      });
     }
 
     // Hide loading when page is loaded
@@ -114,8 +268,8 @@
       }, 3000);
     });
   </script>
-  
-  <!-- Load script.js after WebGazer -->
+
+  <!-- Load script.js - ONLY ONCE -->
   <script src="script.js"></script>
 </body>
 </html>

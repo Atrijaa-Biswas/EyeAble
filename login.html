@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>EyeAble - Login</title>
+  <title>EyeAble - Authentication</title>
   <link rel="stylesheet" href="style.css">
   <style>
     body {
@@ -9,30 +9,73 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
     }
     
-    .login-container {
+    .auth-container {
       background: white;
       padding: 40px;
       border-radius: 20px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-      width: 350px;
+      width: 400px;
+      max-width: 100%;
       text-align: center;
     }
     
-    .login-container h1 {
+    .auth-container h1 {
       margin-top: 0;
       color: #333;
       font-size: 32px;
     }
     
-    .login-container h2 {
+    .auth-container h2 {
       color: #666;
       font-size: 24px;
       margin-bottom: 30px;
+    }
+    
+    .tab-container {
+      display: flex;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #eee;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      color: #667eea;
+      border-bottom: 3px solid #667eea;
+    }
+    
+    .tab.teacher-tab.active {
+      color: #28a745;
+      border-bottom-color: #28a745;
+    }
+    
+    .tab.student-tab.active {
+      color: #007bff;
+      border-bottom-color: #007bff;
+    }
+    
+    .auth-form {
+      display: none;
+    }
+    
+    .auth-form.active {
+      display: block;
     }
     
     .input-group {
@@ -62,42 +105,7 @@
       border-color: #667eea;
     }
     
-    .role-selector {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 25px;
-    }
-    
-    .role-btn {
-      flex: 1;
-      padding: 12px;
-      margin: 0 5px;
-      border: 2px solid #ddd;
-      background: white;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .role-btn.active {
-      background: #667eea;
-      color: white;
-      border-color: #667eea;
-    }
-    
-    .role-btn.teacher.active {
-      background: #28a745;
-      border-color: #28a745;
-    }
-    
-    .role-btn.student.active {
-      background: #007bff;
-      border-color: #007bff;
-    }
-    
-    .login-btn {
+    .auth-btn {
       width: 100%;
       padding: 14px;
       background: #667eea;
@@ -108,111 +116,473 @@
       font-weight: bold;
       cursor: pointer;
       transition: background 0.3s;
+      margin-bottom: 15px;
     }
     
-    .login-btn:hover {
+    .auth-btn:hover {
       background: #5a67d8;
+    }
+    
+    .google-btn {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      color: #444;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .google-btn:hover {
+      background: #f8f9fa;
+      border-color: #4285f4;
+    }
+    
+    .google-btn img {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .role-selector {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .role-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .role-btn.teacher.active {
+      background: #28a745;
+      color: white;
+      border-color: #28a745;
+    }
+    
+    .role-btn.student.active {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
     }
     
     .error-message {
       color: #dc3545;
-      margin-top: 15px;
+      margin: 15px 0;
       font-size: 14px;
       display: none;
+      padding: 10px;
+      background: #f8d7da;
+      border-radius: 5px;
     }
     
-    .demo-credentials {
-      margin-top: 25px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 8px;
+    .success-message {
+      color: #28a745;
+      margin: 15px 0;
       font-size: 14px;
+      display: none;
+      padding: 10px;
+      background: #d4edda;
+      border-radius: 5px;
+    }
+    
+    .switch-form {
+      margin-top: 20px;
       color: #666;
     }
     
-    .demo-credentials p {
-      margin: 5px 0;
+    .switch-form a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .switch-form a:hover {
+      text-decoration: underline;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #999;
+      margin: 20px 0;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .divider span {
+      padding: 0 10px;
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
+  <div class="auth-container">
     <h1>👁️ EyeAble</h1>
-    <h2>Login</h2>
+    <h2 id="formTitle">Login</h2>
     
-    <div class="input-group">
-      <label>Username</label>
-      <input type="text" id="username" placeholder="Enter username" value="student">
+    <div class="tab-container">
+      <button class="tab login-tab active" onclick="switchTab('login')">Login</button>
+      <button class="tab signup-tab" onclick="switchTab('signup')">Sign Up</button>
     </div>
     
-    <div class="input-group">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="Enter password" value="password123">
+    <!-- Login Form -->
+    <div id="loginForm" class="auth-form active">
+      <div class="role-selector">
+        <button class="role-btn teacher" onclick="setRole('teacher', 'login')">👩‍🏫 Teacher</button>
+        <button class="role-btn student active" onclick="setRole('student', 'login')">👨‍🎓 Student</button>
+      </div>
+      
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email" value="student@example.com">
+      </div>
+      
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" value="password123">
+      </div>
+      
+      <button class="auth-btn" onclick="loginWithEmail()">Login with Email</button>
+      
+      <div class="divider">
+        <span>OR</span>
+      </div>
+      
+      <button class="google-btn" onclick="loginWithGoogle()">
+        <img src="https://www.google.com/favicon.ico" alt="Google">
+        Continue with Google
+      </button>
+      
+      <div class="error-message" id="loginError"></div>
     </div>
     
-    <div class="role-selector">
-      <button class="role-btn teacher" onclick="setRole('teacher')">👩‍🏫 Teacher</button>
-      <button class="role-btn student active" onclick="setRole('student')">👨‍🎓 Student</button>
-    </div>
-    
-    <button class="login-btn" onclick="login()">Login</button>
-    
-    <div class="error-message" id="errorMessage">Invalid username or password</div>
-    
-    <div class="demo-credentials">
-      <p><strong>Demo Credentials:</strong></p>
-      <p>👩‍🏫 Teacher: teacher / password123</p>
-      <p>👨‍🎓 Student: student / password123</p>
+    <!-- Signup Form -->
+    <div id="signupForm" class="auth-form">
+      <div class="role-selector">
+        <button class="role-btn teacher" onclick="setRole('teacher', 'signup')">👩‍🏫 Teacher</button>
+        <button class="role-btn student active" onclick="setRole('student', 'signup')">👨‍🎓 Student</button>
+      </div>
+      
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Enter your full name">
+      </div>
+      
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="signupEmail" placeholder="Enter your email">
+      </div>
+      
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Choose a password (min. 6 characters)">
+      </div>
+      
+      <div class="input-group">
+        <label>Confirm Password</label>
+        <input type="password" id="signupConfirmPassword" placeholder="Confirm your password">
+      </div>
+      
+      <button class="auth-btn" onclick="signupWithEmail()">Create Account</button>
+      
+      <div class="divider">
+        <span>OR</span>
+      </div>
+      
+      <button class="google-btn" onclick="loginWithGoogle()">
+        <img src="https://www.google.com/favicon.ico" alt="Google">
+        Sign up with Google
+      </button>
+      
+      <div class="success-message" id="signupSuccess"></div>
+      <div class="error-message" id="signupError"></div>
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
   <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
+      authDomain: "eyeable-2026.firebaseapp.com",
+      databaseURL: "https://eyeable-2026-default-rtdb.firebaseio.com",
+      projectId: "eyeable-2026",
+      storageBucket: "eyeable-2026.firebasestorage.app",
+      messagingSenderId: "29944050006",
+      appId: "1:29944050006:web:33515697c3aac35432e6f7",
+      measurementId: "G-YMPV5EPEDV"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // State variables
     let selectedRole = 'student';
-    
-    function setRole(role) {
+    let currentForm = 'login';
+
+    // Sign out any existing user on page load to force account selection
+    auth.signOut();
+
+    // Tab switching
+    function switchTab(tab) {
+      currentForm = tab;
+      
+      // Update tab styles
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      if (tab === 'login') {
+        document.querySelector('.login-tab').classList.add('active');
+        document.getElementById('loginForm').classList.add('active');
+        document.getElementById('signupForm').classList.remove('active');
+        document.getElementById('formTitle').textContent = 'Login';
+      } else {
+        document.querySelector('.signup-tab').classList.add('active');
+        document.getElementById('signupForm').classList.add('active');
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('formTitle').textContent = 'Sign Up';
+      }
+      
+      // Reset role to student for both forms
+      setRole('student', tab);
+    }
+
+    // Role selection
+    function setRole(role, form) {
       selectedRole = role;
       
-      // Update button styles
-      document.querySelectorAll('.role-btn').forEach(btn => {
+      // Update button styles for the active form
+      const formSelector = form === 'login' ? '#loginForm' : '#signupForm';
+      document.querySelectorAll(`${formSelector} .role-btn`).forEach(btn => {
         btn.classList.remove('active');
       });
       
       if (role === 'teacher') {
-        document.querySelector('.role-btn.teacher').classList.add('active');
+        document.querySelector(`${formSelector} .role-btn.teacher`).classList.add('active');
       } else {
-        document.querySelector('.role-btn.student').classList.add('active');
+        document.querySelector(`${formSelector} .role-btn.student`).classList.add('active');
       }
     }
-    
-    function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const errorMessage = document.getElementById('errorMessage');
+
+    // Email/Password Signup
+    async function signupWithEmail() {
+      const name = document.getElementById('signupName').value;
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('signupConfirmPassword').value;
       
-      // Simple demo authentication
-      if ((username === 'teacher' && password === 'password123') || 
-          (username === 'student' && password === 'password123')) {
+      // Clear previous messages
+      document.getElementById('signupError').style.display = 'none';
+      document.getElementById('signupSuccess').style.display = 'none';
+      
+      // Validation
+      if (!name || !email || !password || !confirmPassword) {
+        showError('signupError', 'Please fill in all fields');
+        return;
+      }
+      
+      if (password.length < 6) {
+        showError('signupError', 'Password must be at least 6 characters');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        showError('signupError', 'Passwords do not match');
+        return;
+      }
+      
+      try {
+        // Create user with email and password
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
         
-        // Store user info in localStorage
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('username', username);
-        localStorage.setItem('role', selectedRole);
+        // Update profile with display name
+        await user.updateProfile({
+          displayName: name
+        });
         
-        // Redirect based on selected role
-        if (selectedRole === 'teacher') {
-          window.location.href = 'teacher.html';
-        } else {
-          window.location.href = 'index.html';
+        // Save user data to database
+        await database.ref('users/' + user.uid).set({
+          name: name,
+          email: email,
+          role: selectedRole,
+          createdAt: new Date().toISOString()
+        });
+        
+        // Show success message
+        showSuccess('signupSuccess', 'Account created successfully! Redirecting...');
+        
+        // Redirect after short delay
+        setTimeout(() => {
+          redirectToDashboard(selectedRole);
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Signup error:', error);
+        let errorMessage = 'Signup failed. ';
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage += 'Email is already registered.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage += 'Invalid email address.';
+            break;
+          case 'auth/weak-password':
+            errorMessage += 'Password is too weak.';
+            break;
+          default:
+            errorMessage += error.message;
         }
-      } else {
-        errorMessage.style.display = 'block';
+        showError('signupError', errorMessage);
       }
     }
-    
-    // Clear any existing login data when loading login page
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('username');
-    localStorage.removeItem('role');
+
+    // Email/Password Login
+    async function loginWithEmail() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      document.getElementById('loginError').style.display = 'none';
+      
+      if (!email || !password) {
+        showError('loginError', 'Please enter email and password');
+        return;
+      }
+      
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Get user role from database
+        const snapshot = await database.ref('users/' + user.uid).once('value');
+        const userData = snapshot.val();
+        
+        if (userData && userData.role) {
+          redirectToDashboard(userData.role);
+        } else {
+          // If no role found, assign the selected role
+          await database.ref('users/' + user.uid).update({
+            role: selectedRole
+          });
+          redirectToDashboard(selectedRole);
+        }
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        let errorMessage = 'Login failed. ';
+        switch (error.code) {
+          case 'auth/user-not-found':
+            errorMessage += 'User not found.';
+            break;
+          case 'auth/wrong-password':
+            errorMessage += 'Incorrect password.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage += 'Invalid email address.';
+            break;
+          case 'auth/user-disabled':
+            errorMessage += 'This account has been disabled.';
+            break;
+          default:
+            errorMessage += error.message;
+        }
+        showError('loginError', errorMessage);
+      }
+    }
+
+    // Google Sign-In - FIXED VERSION
+    async function loginWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      
+      // Force account selection every time
+      provider.setCustomParameters({
+        prompt: 'select_account',
+        authuser: '-1'
+      });
+      
+      try {
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        // Check if user exists in database
+        const snapshot = await database.ref('users/' + user.uid).once('value');
+        
+        if (!snapshot.exists()) {
+          // New user - save to database with selected role
+          await database.ref('users/' + user.uid).set({
+            name: user.displayName,
+            email: user.email,
+            role: selectedRole,
+            createdAt: new Date().toISOString()
+          });
+          redirectToDashboard(selectedRole);
+        } else {
+          // Existing user - get role from database
+          const userData = snapshot.val();
+          redirectToDashboard(userData.role);
+        }
+        
+      } catch (error) {
+        console.error('Google login error:', error);
+        const errorElement = currentForm === 'login' ? 'loginError' : 'signupError';
+        showError(errorElement, 'Google sign-in failed: ' + error.message);
+      }
+    }
+
+    function redirectToDashboard(role) {
+      // Store minimal info in localStorage for UI
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('username', auth.currentUser.displayName || auth.currentUser.email);
+      localStorage.setItem('role', role);
+      
+      // Redirect based on role
+      if (role === 'teacher') {
+        window.location.href = 'teacher.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Helper functions
+    function showError(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.style.display = 'block';
+    }
+
+    function showSuccess(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.style.display = 'block';
+    }
+
+    // Initialize with student role
+    setRole('student', 'login');
   </script>
 </body>
 </html>
