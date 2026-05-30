@@ -1,146 +1,221 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Teacher Dashboard</title>
+  <title>EyeAble - Teacher Dashboard</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    body { background: #eef6fb; }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-bar .brand { font-size: 20px; font-weight: bold; color: #333; }
+    .top-bar .user-info { font-size: 14px; color: #555; }
     .logout-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background-color: #dc3545;
-      padding: 10px 20px;
-      z-index: 1000;
-    }
-    
-    .logout-btn:hover {
-      background-color: #c82333;
-    }
-    
-    .user-info {
-      position: absolute;
-      top: 20px;
-      left: 20px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
       font-weight: bold;
-      color: #333;
+    }
+    .logout-btn:hover { background: #c82333; }
+    .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+    h1 { text-align: center; margin-bottom: 30px; color: #333; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      flex: 1;
       background: white;
-      padding: 8px 15px;
-      border-radius: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      z-index: 1000;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     }
-    
-    .container {
-      max-width: 800px;
-      margin: 80px auto 20px;
-      padding: 20px;
+    .stat-card .num { font-size: 32px; font-weight: bold; color: #667eea; }
+    .stat-card .label { font-size: 13px; color: #888; margin-top: 4px; }
+
+    /* Section cards */
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      margin-bottom: 24px;
     }
-    
-    #questionInput {
+    .card h2 { margin-top: 0; margin-bottom: 16px; font-size: 18px; color: #444; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+
+    /* Assignment form */
+    .form-row { display: flex; gap: 12px; margin-bottom: 14px; }
+    .form-row input, .form-row textarea { flex: 1; }
+    input[type="text"], textarea.question-input {
       width: 100%;
-      padding: 15px;
-      font-size: 18px;
-      border: 2px solid #ccc;
+      padding: 12px 14px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: Arial, sans-serif;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, textarea.question-input:focus { outline: none; border-color: #667eea; }
+    textarea.question-input { resize: vertical; min-height: 80px; }
+    .btn { padding: 10px 22px; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-primary:hover { background: #5a67d8; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+    /* Assignment list */
+    .assignment-item {
+      border: 2px solid #e8e8e8;
       border-radius: 10px;
-      margin-bottom: 20px;
-      resize: vertical;
+      padding: 16px;
+      margin-bottom: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
     }
-    
-    .student-answer {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      border: 2px solid #28a745;
-      min-height: 100px;
-      font-size: 18px;
-      margin-top: 20px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    
-    .refresh-btn {
-      background-color: #007bff;
-      margin-left: 10px;
-    }
-    
-    .refresh-btn:hover {
-      background-color: #0056b3;
+    .assignment-item:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102,126,234,0.12); }
+    .assignment-item.selected { border-color: #667eea; background: #f7f8ff; }
+    .assignment-item .info .title { font-weight: bold; font-size: 16px; color: #333; }
+    .assignment-item .info .desc { font-size: 13px; color: #777; margin-top: 4px; }
+    .assignment-item .info .meta { font-size: 12px; color: #bbb; margin-top: 6px; }
+    .assignment-item .actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px; }
+    .badge {
+      display: inline-block;
+      background: #28a745;
+      color: white;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 8px;
     }
 
-    .answers-container {
-      margin-top: 30px;
-    }
-
+    /* Answers section */
     .answer-card {
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
       background: white;
-      padding: 15px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      margin-bottom: 10px;
-      text-align: left;
     }
-
-    .answer-card strong {
-      color: #28a745;
-    }
-
-    .answer-card small {
-      color: #666;
-      display: block;
-      margin-top: 5px;
-    }
-
-    .stats {
+    .answer-card .student-name { font-weight: bold; color: #333; font-size: 15px; }
+    .answer-card .answer-text {
+      margin-top: 8px;
+      font-size: 16px;
+      color: #222;
       background: #f8f9fa;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+      border-radius: 6px;
+      padding: 10px 14px;
+      word-break: break-word;
     }
-
-    .clear-btn {
-      background-color: #dc3545;
-      margin-left: 10px;
-    }
-
-    .clear-btn:hover {
-      background-color: #c82333;
-    }
+    .answer-card .answer-meta { font-size: 12px; color: #aaa; margin-top: 6px; }
+    .no-answers { color: #aaa; text-align: center; padding: 20px 0; font-size: 15px; }
+    .tab-btns { display: flex; gap: 10px; margin-bottom: 18px; }
+    .tab-btn { padding: 8px 20px; border: 2px solid #ddd; background: white; border-radius: 20px; font-size: 14px; cursor: pointer; font-weight: bold; color: #666; transition: all 0.2s; }
+    .tab-btn.active { background: #667eea; color: white; border-color: #667eea; }
+    .section { display: none; }
+    .section.active { display: block; }
   </style>
 </head>
 <body>
-  <div class="user-info" id="userInfo">Loading user info...</div>
-  <button class="logout-btn" onclick="logout()">Logout</button>
-  
+
+  <div class="top-bar">
+    <div class="brand">👁️ EyeAble</div>
+    <div class="user-info" id="userInfo">Loading...</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
   <div class="container">
     <h1>👩‍🏫 Teacher Dashboard</h1>
 
-    <div class="stats" id="stats">
-      Loading statistics...
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="num" id="statAssignments">0</div>
+        <div class="label">Assignments</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statAnswers">0</div>
+        <div class="label">Total Submissions</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statStudents">0</div>
+        <div class="label">Active Students</div>
+      </div>
     </div>
 
-    <textarea id="questionInput" placeholder="Enter question here (e.g., Type the word: CAT)" rows="4">Type the word: CAT</textarea>
-    <br>
-    <button onclick="saveQuestion()">Save Question</button>
-    <button class="refresh-btn" onclick="loadAnswers()">Refresh Answers</button>
-    <button class="clear-btn" onclick="clearAllAnswers()">Clear All Answers</button>
+    <!-- Tabs -->
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchSection('assignments')">📋 Assignments</button>
+      <button class="tab-btn" onclick="switchSection('answers')">📝 Submissions</button>
+    </div>
 
-    <h2>Current Student Answer:</h2>
-    <div class="student-answer" id="currentStudentAnswer">No answer yet</div>
+    <!-- ASSIGNMENTS SECTION -->
+    <div class="section active" id="section-assignments">
+      <!-- Create Assignment -->
+      <div class="card">
+        <h2>➕ Create New Assignment</h2>
+        <div class="form-row">
+          <input type="text" id="assignmentTitle" placeholder="Assignment title (e.g. Spell: CAT)">
+        </div>
+        <div class="form-row">
+          <textarea class="question-input" id="assignmentDesc" placeholder="Description / instructions for the student (e.g. Use eye tracking to type the word CAT on the keyboard)"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="createAssignment()">Save Assignment</button>
+      </div>
 
-    <div class="answers-container">
-      <h2>All Student Answers:</h2>
-      <div id="allAnswers">Loading answers...</div>
+      <!-- Assignment List -->
+      <div class="card">
+        <h2>📋 Your Assignments</h2>
+        <div id="assignmentList"><p style="color:#aaa;text-align:center;padding:20px 0">No assignments yet. Create one above.</p></div>
+      </div>
+    </div>
+
+    <!-- SUBMISSIONS SECTION -->
+    <div class="section" id="section-answers">
+      <div class="card">
+        <h2>📝 Student Submissions</h2>
+        <div style="margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <label style="font-weight:bold;font-size:14px;color:#555">Filter by Assignment:</label>
+          <select id="filterAssignment" style="padding:8px 14px;border:2px solid #ddd;border-radius:8px;font-size:14px" onchange="loadAnswers()">
+            <option value="all">All Assignments</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="loadAnswers()">Refresh</button>
+          <button class="btn btn-danger btn-sm" onclick="clearAllAnswers()">Clear All</button>
+        </div>
+        <div id="allAnswers"><p class="no-answers">Loading submissions...</p></div>
+      </div>
     </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
   <script>
-    // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "YOUR_NEW_KEY",
+      apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
       authDomain: "eyeable-2026.firebaseapp.com",
       databaseURL: "https://eyeable-2026-default-rtdb.firebaseio.com",
       projectId: "eyeable-2026",
@@ -150,229 +225,192 @@
       measurementId: "G-YMPV5EPEDV"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const database = firebase.database();
+    const db = firebase.database();
 
-    // Check authentication status
-    auth.onAuthStateChanged((user) => {
-      if (!user) {
-        // No user logged in, redirect to login
-        window.location.href = 'login.html';
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+
+      const snap = await db.ref('users/' + user.uid).once('value');
+      const userData = snap.val();
+
+      if (!userData || userData.role !== 'teacher') {
+        if (userData && userData.role === 'student') window.location.href = 'index.html';
+        else { auth.signOut(); window.location.href = 'login.html'; }
         return;
       }
 
-      // Check if user is a teacher
-      database.ref('users/' + user.uid).once('value')
-        .then((snapshot) => {
-          const userData = snapshot.val();
-          if (!userData || userData.role !== 'teacher') {
-            // Wrong role or no role, redirect to appropriate page
-            if (userData && userData.role === 'student') {
-              window.location.href = 'index.html';
-            } else {
-              // No role assigned, redirect to login
-              auth.signOut();
-              window.location.href = 'login.html';
-            }
-            return;
-          }
-
-          // Display user info
-          const displayName = userData.name || user.displayName || user.email;
-          document.getElementById('userInfo').innerText = `Logged in as: ${displayName} (Teacher)`;
-          
-          // Load existing question
-          loadExistingQuestion();
-          
-          // Load answers
-          loadAnswers();
-          
-          // Set up real-time listener for answers
-          setupAnswersListener();
-        })
-        .catch((error) => {
-          console.error('Error checking user role:', error);
-        });
+      document.getElementById('userInfo').textContent = `${userData.name || user.email} (Teacher)`;
+      loadAssignments();
+      loadAnswers();
+      setupRealtimeListeners();
     });
 
-    // Load existing question
-    function loadExistingQuestion() {
-      database.ref('currentQuestion').once('value')
-        .then((snapshot) => {
-          const question = snapshot.val();
-          if (question) {
-            document.getElementById('questionInput').value = question;
-          } else {
-            // Try localStorage as fallback
-            const savedQuestion = localStorage.getItem('question');
-            if (savedQuestion) {
-              document.getElementById('questionInput').value = savedQuestion;
-            }
-          }
-        })
-        .catch((error) => {
-          console.error('Error loading question:', error);
-        });
+    function switchSection(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('section-' + name).classList.add('active');
+      event.target.classList.add('active');
+      if (name === 'answers') loadAnswers();
     }
 
-    function saveQuestion() {
-      const question = document.getElementById("questionInput").value;
-      
-      // Save to Firebase
-      database.ref('currentQuestion').set(question)
-        .then(() => {
-          // Also save to localStorage as backup
-          localStorage.setItem("question", question);
-          alert("Question Saved! Students will now see: " + question);
-        })
-        .catch((error) => {
-          console.error('Error saving question:', error);
-          alert("Error saving question. Please try again.");
-        });
-    }
+    // ── ASSIGNMENTS ──────────────────────────────────────────────
+    async function createAssignment() {
+      const title = document.getElementById('assignmentTitle').value.trim();
+      const desc = document.getElementById('assignmentDesc').value.trim();
 
-    function loadAnswers() {
-      // Load the most recent answer (for backward compatibility)
-      database.ref('answers').orderByKey().limitToLast(1).once('value')
-        .then((snapshot) => {
-          const answers = snapshot.val();
-          if (answers) {
-            // Get the most recent answer
-            const latestAnswerKey = Object.keys(answers).pop();
-            const latestAnswer = answers[latestAnswerKey];
-            document.getElementById('currentStudentAnswer').innerText = 
-              latestAnswer.text || "No answer yet";
-          } else {
-            // Fallback to localStorage
-            const localAnswer = localStorage.getItem("answer");
-            document.getElementById('currentStudentAnswer').innerText = localAnswer || "No answer yet";
-          }
-        })
-        .catch((error) => {
-          console.error('Error loading answers:', error);
-          // Fallback to localStorage
-          const localAnswer = localStorage.getItem("answer");
-          document.getElementById('currentStudentAnswer').innerText = localAnswer || "No answer yet";
-        });
+      if (!title) { alert('Please enter an assignment title.'); return; }
 
-      // Load all answers for display
-      loadAllAnswers();
-      updateStats();
-    }
+      const assignment = {
+        title,
+        description: desc,
+        createdAt: Date.now()
+      };
 
-    function loadAllAnswers() {
-      database.ref('answers').once('value')
-        .then((snapshot) => {
-          const answers = snapshot.val();
-          const allAnswersDiv = document.getElementById('allAnswers');
-          
-          if (!answers) {
-            allAnswersDiv.innerHTML = '<p>No answers yet</p>';
-            return;
-          }
-
-          // Convert to array and sort by timestamp (newest first)
-          const answersArray = Object.entries(answers).map(([key, value]) => ({
-            id: key,
-            ...value
-          })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-          let html = '';
-          answersArray.forEach(answer => {
-            const date = answer.timestamp ? new Date(answer.timestamp).toLocaleString() : 'Unknown date';
-            const studentName = answer.studentName || answer.studentEmail || 'Unknown student';
-            
-            html += `
-              <div class="answer-card">
-                <strong>${studentName}</strong>
-                <p>${answer.text || ''}</p>
-                <small>Submitted: ${date}</small>
-              </div>
-            `;
-          });
-
-          allAnswersDiv.innerHTML = html;
-        })
-        .catch((error) => {
-          console.error('Error loading all answers:', error);
-          document.getElementById('allAnswers').innerHTML = '<p>Error loading answers</p>';
-        });
-    }
-
-    function updateStats() {
-      database.ref('answers').once('value')
-        .then((snapshot) => {
-          const answers = snapshot.val();
-          const totalAnswers = answers ? Object.keys(answers).length : 0;
-          
-          // Get unique students
-          const uniqueStudents = new Set();
-          if (answers) {
-            Object.values(answers).forEach(answer => {
-              if (answer.studentId) uniqueStudents.add(answer.studentId);
-            });
-          }
-
-          document.getElementById('stats').innerHTML = `
-            <strong>Statistics:</strong><br>
-            Total Answers: ${totalAnswers}<br>
-            Active Students: ${uniqueStudents.size}
-          `;
-        })
-        .catch((error) => {
-          console.error('Error updating stats:', error);
-        });
-    }
-
-    function setupAnswersListener() {
-      // Listen for new answers in real-time
-      database.ref('answers').on('child_added', () => {
-        loadAllAnswers();
-        updateStats();
-        loadAnswers(); // Update current answer
-      });
-    }
-
-    function clearAllAnswers() {
-      if (confirm('Are you sure you want to clear all answers? This cannot be undone.')) {
-        database.ref('answers').remove()
-          .then(() => {
-            localStorage.removeItem('answer');
-            document.getElementById('currentStudentAnswer').innerText = 'No answer yet';
-            document.getElementById('allAnswers').innerHTML = '<p>No answers yet</p>';
-            updateStats();
-            alert('All answers cleared successfully');
-          })
-          .catch((error) => {
-            console.error('Error clearing answers:', error);
-            alert('Error clearing answers. Please try again.');
-          });
+      try {
+        await db.ref('assignments').push(assignment);
+        document.getElementById('assignmentTitle').value = '';
+        document.getElementById('assignmentDesc').value = '';
+        loadAssignments();
+      } catch (e) {
+        alert('Error saving assignment: ' + e.message);
       }
     }
 
-    function logout() {
-      auth.signOut().then(() => {
-        // Clear login data but keep question
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('username');
-        localStorage.removeItem('role');
-        
-        // Redirect to login
-        window.location.href = 'login.html';
-      }).catch((error) => {
-        console.error('Logout error:', error);
-        // Force redirect even if signout fails
-        localStorage.clear();
-        window.location.href = 'login.html';
+    async function loadAssignments() {
+      const snap = await db.ref('assignments').once('value');
+      const data = snap.val();
+      const list = document.getElementById('assignmentList');
+      const filterSelect = document.getElementById('filterAssignment');
+
+      // Reset filter options
+      filterSelect.innerHTML = '<option value="all">All Assignments</option>';
+
+      if (!data) {
+        list.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px 0">No assignments yet.</p>';
+        document.getElementById('statAssignments').textContent = '0';
+        return;
+      }
+
+      const items = Object.entries(data).sort((a, b) => b[1].createdAt - a[1].createdAt);
+      document.getElementById('statAssignments').textContent = items.length;
+
+      // Get answer counts per assignment
+      const answersSnap = await db.ref('answers').once('value');
+      const allAnswers = answersSnap.val() || {};
+      const countMap = {};
+      Object.values(allAnswers).forEach(a => {
+        if (a.assignmentId) countMap[a.assignmentId] = (countMap[a.assignmentId] || 0) + 1;
+      });
+
+      let html = '';
+      items.forEach(([id, a]) => {
+        const count = countMap[id] || 0;
+        const date = new Date(a.createdAt).toLocaleDateString();
+        html += `
+          <div class="assignment-item">
+            <div class="info">
+              <div class="title">${escHtml(a.title)} <span class="badge">${count} submission${count !== 1 ? 's' : ''}</span></div>
+              ${a.description ? `<div class="desc">${escHtml(a.description)}</div>` : ''}
+              <div class="meta">Created ${date}</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${id}', event)">Delete</button>
+            </div>
+          </div>`;
+
+        filterSelect.innerHTML += `<option value="${id}">${escHtml(a.title)}</option>`;
+      });
+
+      list.innerHTML = html;
+    }
+
+    async function deleteAssignment(id, e) {
+      e.stopPropagation();
+      if (!confirm('Delete this assignment? Student submissions for it will remain.')) return;
+      await db.ref('assignments/' + id).remove();
+      loadAssignments();
+    }
+
+    // ── ANSWERS ───────────────────────────────────────────────────
+    async function loadAnswers() {
+      const filterVal = document.getElementById('filterAssignment').value;
+      const snap = await db.ref('answers').once('value');
+      const data = snap.val();
+      const div = document.getElementById('allAnswers');
+
+      if (!data) {
+        div.innerHTML = '<p class="no-answers">No submissions yet.</p>';
+        document.getElementById('statAnswers').textContent = '0';
+        document.getElementById('statStudents').textContent = '0';
+        return;
+      }
+
+      let items = Object.entries(data).map(([k, v]) => ({ id: k, ...v }));
+      items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+      // Update stats
+      document.getElementById('statAnswers').textContent = items.length;
+      const uniqueStudents = new Set(items.map(i => i.studentId).filter(Boolean));
+      document.getElementById('statStudents').textContent = uniqueStudents.size;
+
+      // Filter
+      if (filterVal !== 'all') items = items.filter(i => i.assignmentId === filterVal);
+
+      if (items.length === 0) {
+        div.innerHTML = '<p class="no-answers">No submissions for this assignment yet.</p>';
+        return;
+      }
+
+      // Get assignment titles for display
+      const assignSnap = await db.ref('assignments').once('value');
+      const assignments = assignSnap.val() || {};
+
+      let html = '';
+      items.forEach(item => {
+        const date = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Unknown date';
+        const studentName = item.studentName || item.studentEmail || 'Unknown student';
+        const assignTitle = item.assignmentId && assignments[item.assignmentId]
+          ? assignments[item.assignmentId].title
+          : (item.question || 'General');
+
+        html += `
+          <div class="answer-card">
+            <div class="student-name">👨‍🎓 ${escHtml(studentName)}</div>
+            <div class="answer-meta">Assignment: <strong>${escHtml(assignTitle)}</strong></div>
+            <div class="answer-text">${escHtml(item.text || '')}</div>
+            <div class="answer-meta">Submitted: ${date}</div>
+          </div>`;
+      });
+
+      div.innerHTML = html;
+    }
+
+    async function clearAllAnswers() {
+      if (!confirm('Clear ALL submissions? This cannot be undone.')) return;
+      await db.ref('answers').remove();
+      loadAnswers();
+    }
+
+    function setupRealtimeListeners() {
+      db.ref('answers').on('child_added', () => {
+        loadAnswers();
+        loadAssignments(); // refresh badge counts
       });
     }
 
-    // Load answers initially and set up periodic refresh
-    loadAnswers();
-    setInterval(loadAnswers, 5000); // Refresh every 5 seconds
+    function logout() {
+      auth.signOut().then(() => { window.location.href = 'login.html'; });
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
   </script>
 </body>
-
 </html>

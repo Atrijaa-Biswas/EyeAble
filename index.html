@@ -4,164 +4,214 @@
   <title>EyeAble - Student</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    body { background: #eef6fb; }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-bar .brand { font-size: 20px; font-weight: bold; color: #333; }
+    .top-bar .user-info { font-size: 14px; color: #555; }
     .logout-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background-color: #dc3545;
-      padding: 10px 20px;
-      z-index: 1000;
+      background: #dc3545; color: white; border: none;
+      padding: 8px 18px; border-radius: 8px; font-size: 14px;
+      cursor: pointer; font-weight: bold;
     }
-    
-    .logout-btn:hover {
-      background-color: #c82333;
+    .logout-btn:hover { background: #c82333; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+    h1 { text-align: center; color: #333; margin-bottom: 24px; }
+
+    /* Assignment picker */
+    .assignment-list { margin-bottom: 20px; }
+    .assignment-cards { display: flex; gap: 14px; flex-wrap: wrap; }
+    .assignment-card {
+      background: white;
+      border: 2px solid #e8e8e8;
+      border-radius: 12px;
+      padding: 14px 20px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      min-width: 180px;
+      flex: 1;
     }
-    
-    .user-info {
-      position: absolute;
-      top: 20px;
-      left: 20px;
+    .assignment-card:hover { border-color: #667eea; box-shadow: 0 2px 10px rgba(102,126,234,0.15); }
+    .assignment-card.selected { border-color: #667eea; background: #f0f3ff; }
+    .assignment-card .a-title { font-size: 15px; font-weight: bold; color: #333; }
+    .assignment-card .a-desc { font-size: 13px; color: #777; margin-top: 4px; }
+    .no-assignments { color: #aaa; text-align: center; padding: 20px 0; font-size: 15px; }
+
+    /* Question display */
+    .question-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 20px;
       font-weight: bold;
       color: #333;
-      background: white;
-      padding: 8px 15px;
-      border-radius: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      z-index: 1000;
+      margin-bottom: 16px;
+      text-align: center;
     }
+    .question-box.empty { color: #bbb; font-weight: normal; font-size: 16px; }
 
-    .loading {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 20px;
+    /* Answer textarea */
+    textarea#output {
+      width: 100%;
+      padding: 14px;
+      font-size: 20px;
+      border: 2px solid #ddd;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      z-index: 10000;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+      box-sizing: border-box;
+      margin-bottom: 14px;
+      display: block;
     }
+    textarea#output:focus { outline: none; border-color: #667eea; }
 
-    /* Keyboard styles - with larger boxes and proper SPACE/BACK sizing */
+    .action-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+    .btn { padding: 12px 28px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    .btn-submit { background: #28a745; color: white; }
+    .btn-submit:hover { background: #218838; }
+    .btn-clear { background: #6c757d; color: white; }
+    .btn-clear:hover { background: #5a6268; }
+
+    /* Keyboard */
     #keyboard {
       display: grid;
       grid-template-columns: repeat(10, 1fr);
-      gap: 12px;
-      max-width: 1200px;
+      gap: 10px;
+      max-width: 1100px;
       margin: 20px auto;
-      padding: 25px;
+      padding: 20px;
       background: #f0f0f0;
-      border-radius: 15px;
+      border-radius: 14px;
     }
-
     .key {
-      padding: 25px 10px;
-      font-size: 24px;
+      padding: 22px 8px;
+      font-size: 22px;
       font-weight: bold;
-      border: 3px solid #444;
-      border-radius: 12px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
       background: white;
       cursor: pointer;
-      transition: all 0.2s;
-      min-width: 60px;
+      transition: all 0.15s;
       text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.08);
       grid-column: span 1;
     }
-
-    .key.space-key {
-      grid-column: span 4;
-      background-color: #e8e8e8;
-    }
-
-    .key.back-key {
-      grid-column: span 2;
-      background-color: #ffebeb;
-    }
-
-    .key:hover {
-      background: #e0e0e0;
-      transform: scale(1.05);
-    }
-
-    .key.space-key:hover {
-      background: #d8d8d8;
-    }
-
-    .key.back-key:hover {
-      background: #ffd6d6;
-    }
-
+    .key.space-key { grid-column: span 4; background: #e8e8e8; }
+    .key.back-key  { grid-column: span 2; background: #ffebeb; }
+    .key:hover { background: #e0e0e0; transform: scale(1.04); }
+    .key.space-key:hover { background: #d8d8d8; }
+    .key.back-key:hover  { background: #ffd6d6; }
     .key.active {
-      background: #ffd700;
+      background: #ffd700 !important;
       border-color: #ffa500;
       transform: scale(1.1);
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      box-shadow: 0 0 16px rgba(255,215,0,0.5);
     }
 
-    textarea#output {
-      width: 80%;
-      max-width: 600px;
-      padding: 15px;
-      font-size: 18px;
-      border: 2px solid #ccc;
-      border-radius: 5px;
-      margin: 20px auto;
-      display: block;
-      resize: vertical;
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10000;
     }
-
-    button {
-      padding: 12px 30px;
-      font-size: 16px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 10px;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    h1, h2, p {
+    .loading-box {
+      background: white;
+      padding: 28px 40px;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       text-align: center;
+      border: 2px solid #667eea;
+    }
+    .loading-box .spinner { font-size: 36px; margin-bottom: 10px; }
+
+    /* WebGazer video - bottom right */
+    #webgazerVideoContainer {
+      position: fixed !important;
+      bottom: 20px !important;
+      right: 20px !important;
+      top: auto !important;
+      left: auto !important;
+      width: 200px !important;
+      height: 150px !important;
+      z-index: 9999 !important;
+      border: 2px solid #667eea !important;
+      border-radius: 10px !important;
+      overflow: hidden !important;
+      background: #000 !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    }
+    #webgazerVideoContainer video {
+      width: 100% !important; height: 100% !important; object-fit: cover !important;
+    }
+    #webgazerVideoContainer canvas {
+      width: 100% !important; height: 100% !important;
+      position: absolute !important; top: 0 !important; left: 0 !important;
+      pointer-events: none !important;
     }
   </style>
 </head>
 <body>
-  <div class="user-info" id="userInfo">Loading user info...</div>
-  <button class="logout-btn" onclick="logout()">Logout</button>
 
-  <h1>👁️ EyeAble - Student Portal</h1>
-
-  <h2>Question:</h2>
-  <p id="questionText">Loading question...</p>
-
-  <textarea id="output" rows="3" placeholder="Your answer will appear here..."></textarea>
-
-  <div id="keyboard"></div>
-
-  <br>
-  <div style="text-align: center;">
-    <button onclick="submitAnswer()">Submit Answer</button>
-    <button onclick="clearAnswer()" style="background: #6c757d;">Clear</button>
+  <div class="top-bar">
+    <div class="brand">👁️ EyeAble</div>
+    <div class="user-info" id="userInfo">Loading...</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
-  <div class="loading" id="loading">Loading eye tracking... Please allow camera access.</div>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+      <div class="spinner">👁️</div>
+      <div>Starting eye tracking...</div>
+      <div style="font-size:13px;color:#aaa;margin-top:8px">Please allow camera access</div>
+    </div>
+  </div>
 
-  <!-- Load Firebase first -->
+  <div class="container">
+    <h1>👨‍🎓 Student Portal</h1>
+
+    <!-- Assignment picker (always visible) -->
+    <div class="assignment-list">
+      <h2 style="font-size:17px;color:#555;margin-bottom:12px">📋 Select an Assignment</h2>
+      <div class="assignment-cards" id="assignmentList">
+        <p class="no-assignments">Loading assignments...</p>
+      </div>
+    </div>
+
+    <!-- Question display -->
+    <div class="question-box empty" id="questionBox">← Select an assignment above to begin</div>
+
+    <!-- Answer textarea -->
+    <textarea id="output" rows="3" placeholder="Your answer will appear here as you type..."></textarea>
+
+    <!-- Buttons -->
+    <div class="action-btns">
+      <button class="btn btn-submit" onclick="submitAnswer()">✅ Submit Answer</button>
+      <button class="btn btn-clear" onclick="clearAnswer()">🗑 Clear</button>
+    </div>
+
+    <!-- Keyboard (always visible) -->
+    <div id="keyboard"></div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  
-  <!-- Load WebGazer -->
   <script src="https://cdn.jsdelivr.net/npm/webgazer@2.1.0/dist/webgazer.min.js"></script>
-  
+
   <script>
-    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
       authDomain: "eyeable-2026.firebaseapp.com",
@@ -173,103 +223,237 @@
       measurementId: "G-YMPV5EPEDV"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const database = firebase.database();
+    const db = firebase.database();
+    window.database = db;
 
-    // Make Firebase available globally
-    window.firebase = firebase;
-    window.database = database;
+    let currentAssignment = null;
+    let currentUser = null;
 
-    // Check authentication status
-    auth.onAuthStateChanged((user) => {
-      if (!user) {
-        // No user logged in, redirect to login
-        window.location.href = 'login.html';
+    // ── AUTH ──────────────────────────────────────────────────
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      currentUser = user;
+
+      const snap = await db.ref('users/' + user.uid).once('value');
+      let userData = snap.val();
+
+      if (!userData) {
+        await db.ref('users/' + user.uid).set({
+          name: user.displayName || user.email,
+          email: user.email,
+          role: 'student',
+          createdAt: new Date().toISOString()
+        });
+        userData = { role: 'student', name: user.displayName || user.email };
+      }
+
+      if (userData.role === 'teacher') { window.location.href = 'teacher.html'; return; }
+
+      document.getElementById('userInfo').textContent =
+        (userData.name || user.email) + ' (Student)';
+      loadAssignments();
+    });
+
+    // ── ASSIGNMENTS ───────────────────────────────────────────
+    async function loadAssignments() {
+      const snap = await db.ref('assignments').once('value');
+      const data = snap.val();
+      const div = document.getElementById('assignmentList');
+
+      if (!data) {
+        div.innerHTML = '<p class="no-assignments">No assignments yet — check back later!</p>';
         return;
       }
 
-      // Check if user is a student
-      database.ref('users/' + user.uid).once('value')
-        .then((snapshot) => {
-          const userData = snapshot.val();
-          
-          // If user data doesn't exist or role is missing, create it with student role
-          if (!userData) {
-            // Create user record with student role
-            return database.ref('users/' + user.uid).set({
-              name: user.displayName || user.email,
-              email: user.email,
-              role: 'student',
-              createdAt: new Date().toISOString()
-            }).then(() => {
-              // Display user info
-              const displayName = user.displayName || user.email;
-              document.getElementById('userInfo').innerText = `Logged in as: ${displayName} (Student)`;
-            });
-          }
-          
-          // Check role
-          if (userData.role !== 'student') {
-            // Wrong role, redirect to appropriate page
-            if (userData.role === 'teacher') {
-              window.location.href = 'teacher.html';
-            } else {
-              // Invalid role, sign out and redirect to login
-              auth.signOut();
-              window.location.href = 'login.html';
-            }
-            return;
-          }
+      const items = Object.entries(data).sort((a, b) => b[1].createdAt - a[1].createdAt);
 
-          // Display user info
-          const displayName = userData.name || user.displayName || user.email;
-          document.getElementById('userInfo').innerText = `Logged in as: ${displayName} (Student)`;
-        })
-        .catch((error) => {
-          console.error('Error checking user role:', error);
-          // If error occurs, still show the page but with limited info
-          const displayName = user.displayName || user.email;
-          document.getElementById('userInfo').innerText = `Logged in as: ${displayName}`;
-        });
-    });
-
-    function logout() {
-      // Stop webgazer before logging out
-      if (window.webgazer && typeof webgazer.end === 'function') {
-        try {
-          webgazer.end();
-        } catch (e) {
-          console.log('Error stopping webgazer:', e);
-        }
-      }
-
-      // Sign out from Firebase
-      auth.signOut().then(() => {
-        // Clear localStorage
-        localStorage.removeItem('question');
-        localStorage.removeItem('answer');
-        // Redirect to login
-        window.location.href = 'login.html';
-      }).catch((error) => {
-        console.error('Logout error:', error);
-        // Force redirect even if signout fails
-        localStorage.clear();
-        window.location.href = 'login.html';
+      div.innerHTML = '';
+      items.forEach(([id, a]) => {
+        const card = document.createElement('div');
+        card.className = 'assignment-card';
+        card.innerHTML = `
+          <div class="a-title">${escHtml(a.title)}</div>
+          ${a.description ? `<div class="a-desc">${escHtml(a.description)}</div>` : ''}
+        `;
+        card.onclick = () => selectAssignment(id, a, card);
+        div.appendChild(card);
       });
     }
 
-    // Hide loading when page is loaded
-    window.addEventListener('load', function() {
-      setTimeout(() => {
-        const loading = document.getElementById('loading');
-        if (loading) loading.style.display = 'none';
-      }, 3000);
-    });
-  </script>
+    function selectAssignment(id, assignment, cardEl) {
+      currentAssignment = { id, ...assignment };
 
-  <!-- Load script.js - ONLY ONCE -->
-  <script src="script.js"></script>
+      document.querySelectorAll('.assignment-card').forEach(c => c.classList.remove('selected'));
+      cardEl.classList.add('selected');
+
+      const qbox = document.getElementById('questionBox');
+      qbox.textContent = assignment.title +
+        (assignment.description ? ' — ' + assignment.description : '');
+      qbox.classList.remove('empty');
+
+      document.getElementById('output').value = '';
+      document.getElementById('output').focus();
+    }
+
+    // ── KEYBOARD ──────────────────────────────────────────────
+    const keyboardDiv = document.getElementById('keyboard');
+    const output = document.getElementById('output');
+
+    // Build keys
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter => {
+      const btn = document.createElement('button');
+      btn.innerText = letter;
+      btn.className = 'key';
+      btn.onclick = () => handleKey(letter);
+      keyboardDiv.appendChild(btn);
+    });
+
+    const spaceBtn = document.createElement('button');
+    spaceBtn.innerText = 'SPACE';
+    spaceBtn.className = 'key space-key';
+    spaceBtn.onclick = () => handleKey('SPACE');
+    keyboardDiv.appendChild(spaceBtn);
+
+    const backBtn = document.createElement('button');
+    backBtn.innerText = 'BACK';
+    backBtn.className = 'key back-key';
+    backBtn.onclick = () => handleKey('BACK');
+    keyboardDiv.appendChild(backBtn);
+
+    function handleKey(label) {
+      if (label === 'SPACE') output.value += ' ';
+      else if (label === 'BACK') output.value = output.value.slice(0, -1);
+      else output.value += label;
+    }
+    window.handleKey = handleKey;
+
+    // ── SUBMIT / CLEAR ────────────────────────────────────────
+    async function submitAnswer() {
+      const answer = output.value.trim();
+      if (!answer) { alert('Please type an answer first.'); return; }
+      if (!currentAssignment) { alert('Please select an assignment first.'); return; }
+      if (!currentUser) { alert('You must be logged in.'); return; }
+
+      const payload = {
+        text: answer,
+        assignmentId: currentAssignment.id,
+        assignmentTitle: currentAssignment.title,
+        question: currentAssignment.title,
+        studentId: currentUser.uid,
+        studentEmail: currentUser.email,
+        studentName: currentUser.displayName || currentUser.email,
+        timestamp: Date.now()
+      };
+
+      try {
+        await db.ref('answers').push(payload);
+        alert(`✅ Submitted!\n\nAssignment: ${currentAssignment.title}\nYour answer: ${answer}`);
+        output.value = '';
+      } catch (e) {
+        alert('Error submitting: ' + e.message);
+      }
+    }
+    window.submitAnswer = submitAnswer;
+
+    function clearAnswer() { output.value = ''; }
+    window.clearAnswer = clearAnswer;
+
+    // ── EYE TRACKING ──────────────────────────────────────────
+    let currentKey = null;
+    let gazeStartTime = null;
+    let typingLocked = false;
+    let smoothX = null, smoothY = null;
+    const smoothingFactor = 0.15;
+    const dwellTime = 500;
+
+    async function initWebGazer() {
+      if (typeof webgazer === 'undefined') { setTimeout(initWebGazer, 1000); return; }
+
+      try {
+        await webgazer
+          .setRegression('ridge')
+          .setTracker('TFFacemesh')
+          .setGazeListener((data) => {
+            if (!data) return;
+            if (smoothX === null) smoothX = data.x;
+            if (smoothY === null) smoothY = data.y;
+            smoothX += smoothingFactor * (data.x - smoothX);
+            smoothY += smoothingFactor * (data.y - smoothY);
+
+            const allKeys = document.querySelectorAll('.key');
+            let hoveredKey = null;
+            allKeys.forEach(key => {
+              key.classList.remove('active');
+              const r = key.getBoundingClientRect();
+              if (smoothX >= r.left && smoothX <= r.right &&
+                  smoothY >= r.top  && smoothY <= r.bottom)
+                hoveredKey = key;
+            });
+
+            if (hoveredKey) {
+              hoveredKey.classList.add('active');
+              if (currentKey === hoveredKey) {
+                if (!gazeStartTime) gazeStartTime = Date.now();
+                if (Date.now() - gazeStartTime > dwellTime && !typingLocked) {
+                  typingLocked = true;
+                  handleKey(hoveredKey.innerText);
+                  setTimeout(() => { typingLocked = false; }, 500);
+                  gazeStartTime = null; currentKey = null;
+                }
+              } else {
+                currentKey = hoveredKey;
+                gazeStartTime = Date.now();
+              }
+            } else {
+              currentKey = null; gazeStartTime = null;
+            }
+          })
+          .begin();
+
+        webgazer.setStabilization(true);
+        webgazer.showVideo(true);
+        webgazer.showFaceOverlay(true);
+        webgazer.showFaceFeedbackBox(true);
+        webgazer.showPredictionPoints(true);
+        webgazer.params.videoMirror = false;
+
+        setTimeout(() => {
+          document.getElementById('loadingOverlay').style.display = 'none';
+        }, 2500);
+
+      } catch (e) {
+        console.error('WebGazer error:', e);
+        // Hide loading anyway so page is usable
+        document.getElementById('loadingOverlay').style.display = 'none';
+      }
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(initWebGazer, 800);
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (window.webgazer && typeof webgazer.end === 'function') {
+        try { webgazer.end(); } catch (e) {}
+      }
+    });
+
+    window.addEventListener('resize', () => { smoothX = null; smoothY = null; });
+
+    function logout() {
+      if (window.webgazer && typeof webgazer.end === 'function') {
+        try { webgazer.end(); } catch (e) {}
+      }
+      auth.signOut().then(() => { window.location.href = 'login.html'; });
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
 </body>
 </html>
