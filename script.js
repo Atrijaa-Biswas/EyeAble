@@ -1,369 +1,284 @@
-// DOM Elements
-const keyboardDiv = document.getElementById("keyboard");
-const output = document.getElementById("output");
-const questionText = document.getElementById("questionText");
+// ═══════════════════════════════════════════════════════
+//  EyeAble — script.js
+//  Full-screen scattered keyboard, dwell typing
+// ═══════════════════════════════════════════════════════
 
-// Keyboard configuration
-const keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const output       = document.getElementById('output');
+const questionText = document.getElementById('questionText');
+const keyCanvas    = document.getElementById('keyCanvas');
+const gazePointer  = document.getElementById('gazePointer');
+const dbgEl        = document.getElementById('dbg');
 
-// Eye tracking variables
-let currentKey = null;
-let gazeStartTime = null;
-let typingLocked = false;
-let webgazerInitialized = false;
+const KEY_DWELL    = 500;
+const SUBMIT_DWELL = 500;
+const COOLDOWN     = 600;
+const ALPHA        = 0.08;
+const CAND_STABLE  = 180;
 
-// Dwell time for gaze typing (milliseconds)
-const dwellTime = 500;
+let gx = window.innerWidth / 2, gy = window.innerHeight / 2;
+let sx = null, sy = null;
+let gazeReady     = false;
+let gazeCallCount = 0;
 
-// Smoothing variables
-let smoothX = null;
-let smoothY = null;
-const smoothingFactor = 0.15; // 0.1–0.2 = smooth & responsive
-const jitterThreshold = 5; // ignore tiny movement in pixels
+let zones      = [];
+let curZone    = null, dwellStart = null;
+let candZone   = null, candTime   = 0;
+let lastFired  = 0,   locked     = false;
 
-// Load question from Firebase or localStorage
+// ── debug ────────────────────────────────────────────────
+function dbg(extra) {
+  dbgEl.innerHTML =
+    `calls:${gazeCallCount} ready:${gazeReady}<br>` +
+    `gaze:(${Math.round(gx)},${Math.round(gy)})<br>` +
+    `zone:${curZone ? curZone.key : '—'} ` +
+    `held:${dwellStart ? (Date.now()-dwellStart)+'ms' : '—'}<br>` +
+    `ans:"${output.value}" ` + (extra||'');
+}
+
+// ── gaze listener ────────────────────────────────────────
+function onGaze(data) {
+  if (!data || data.x == null) return;
+  gazeCallCount++;
+  if (sx === null) { sx = data.x; sy = data.y; }
+  sx += ALPHA * (data.x - sx);
+  sy += ALPHA * (data.y - sy);
+  gx = sx; gy = sy;
+  gazePointer.style.left = gx + 'px';
+  gazePointer.style.top  = gy + 'px';
+}
+
+// ── scatter keys across full screen ─────────────────────
+function buildKeyboard() {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const allKeys = [...letters, 'SPACE', 'BACK'];
+
+  // Available area: below answer bar (110px from top), above submit (90px from bottom)
+  // Leave 40px padding on sides
+  const PAD_X  = 40;
+  const PAD_Y  = 10;
+  const TOP    = 110 + PAD_Y;
+  const BOTTOM = window.innerHeight - 90;
+  const LEFT   = PAD_X;
+  const RIGHT  = window.innerWidth - PAD_X;
+
+  const areaW  = RIGHT - LEFT;
+  const areaH  = BOTTOM - TOP;
+
+  // Fit keys into a grid that fills the space
+  // 28 keys → try 7 cols × 4 rows
+  const COLS   = 7;
+  const ROWS   = Math.ceil(allKeys.length / COLS);  // 4
+  const KEY_W  = 80;
+  const KEY_H  = 80;
+
+  const cellW  = areaW / COLS;
+  const cellH  = areaH / ROWS;
+
+  keyCanvas.innerHTML = '';
+
+  allKeys.forEach((k, i) => {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+
+    // Center of this cell
+    const cx = LEFT + cellW * col + cellW / 2;
+    const cy = TOP  + cellH * row + cellH / 2;
+
+    const btn = document.createElement('button');
+    btn.className = 'key' + (k === 'SPACE' ? ' space-key' : k === 'BACK' ? ' back-key' : '');
+    btn.textContent = k;
+    btn.dataset.key = k;
+
+    const w = k === 'SPACE' ? 160 : k === 'BACK' ? 120 : KEY_W;
+    const h = (k === 'SPACE' || k === 'BACK') ? 60 : KEY_H;
+
+    btn.style.left   = (cx - w / 2) + 'px';
+    btn.style.top    = (cy - h / 2) + 'px';
+    btn.style.width  = w + 'px';
+    btn.style.height = h + 'px';
+
+    btn.addEventListener('click', () => typeKey(k));
+    keyCanvas.appendChild(btn);
+  });
+}
+
+// ── cache hit zones ──────────────────────────────────────
+function buildZones() {
+  zones = [];
+  document.querySelectorAll('.key').forEach(el => {
+    const r = el.getBoundingClientRect();
+    zones.push({ el, key: el.dataset.key, x1:r.left, y1:r.top, x2:r.right, y2:r.bottom, dwell:KEY_DWELL });
+  });
+  const sb = document.getElementById('submitBtn');
+  if (sb) {
+    const r = sb.getBoundingClientRect();
+    zones.push({ el:sb, key:'__SUBMIT__', x1:r.left, y1:r.top, x2:r.right, y2:r.bottom, dwell:SUBMIT_DWELL });
+  }
+  dbgEl.innerHTML = `zones:${zones.length} — stare at a key to type!`;
+}
+
+window.addEventListener('resize', () => {
+  sx=null; sy=null; curZone=null; dwellStart=null; candZone=null;
+  buildKeyboard();
+  setTimeout(buildZones, 300);
+});
+
+function findZone(x, y) {
+  for (let z of zones) if (x>=z.x1 && x<=z.x2 && y>=z.y1 && y<=z.y2) return z;
+  return null;
+}
+
+// ── progress ─────────────────────────────────────────────
+function setProg(z, f) {
+  if (!z) return;
+  f = Math.min(Math.max(f,0),1);
+  z.el.style.setProperty('--dwell-progress',(f*100)+'%');
+  if (z.el.classList.contains('key')) {
+    const fade = Math.round(220*(1-f));
+    z.el.style.background = `rgb(${Math.round(10+245*f)},${fade},${fade})`;
+  }
+}
+function clrProg(z) {
+  if (!z) return;
+  z.el.style.setProperty('--dwell-progress','0%');
+  z.el.style.background = '';
+  z.el.classList.remove('active','gazing');
+}
+
+// ── RAF loop ─────────────────────────────────────────────
+function loop() {
+  const now = Date.now();
+  const hz  = gazeReady ? findZone(gx, gy) : null;
+
+  document.querySelectorAll('.key.active').forEach(k=>k.classList.remove('active'));
+  const sb = document.getElementById('submitBtn');
+  if (sb) sb.classList.remove('gazing');
+  if (hz) { hz.key==='__SUBMIT__' ? hz.el.classList.add('gazing') : hz.el.classList.add('active'); }
+
+  dbg(hz ? `(${hz.key})` : '');
+
+  if (!gazeReady) { requestAnimationFrame(loop); return; }
+
+  if (hz !== curZone) {
+    if (hz !== candZone) { candZone=hz; candTime=now; }
+    else if (now-candTime >= CAND_STABLE) {
+      clrProg(curZone); curZone=hz; dwellStart=hz?now:null; candZone=null;
+    }
+    requestAnimationFrame(loop); return;
+  }
+
+  if (!curZone) { requestAnimationFrame(loop); return; }
+  if (!dwellStart) dwellStart = now;
+
+  const held = now - dwellStart;
+  setProg(curZone, held / curZone.dwell);
+
+  if (held >= curZone.dwell && !locked && (now-lastFired)>COOLDOWN) {
+    locked=true; lastFired=now;
+    clrProg(curZone);
+    const fired = curZone;
+    fired.key==='__SUBMIT__' ? submitAnswer() : typeKey(fired.key);
+    fired.el.style.background = 'rgba(0,255,170,0.45)';
+    setTimeout(() => { fired.el.style.background=''; locked=false; }, COOLDOWN);
+    curZone=null; dwellStart=null; candZone=null;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ── type ─────────────────────────────────────────────────
+function typeKey(k) {
+  if (k==='SPACE') output.value+=' ';
+  else if (k==='BACK') output.value=output.value.slice(0,-1);
+  else output.value+=k;
+  localStorage.setItem('answer', output.value);
+}
+
+// ── load question ─────────────────────────────────────────
 function loadQuestion() {
   if (window.database) {
     window.database.ref('currentQuestion').once('value')
-      .then((snapshot) => {
-        const question = snapshot.val();
-        if (question) {
-          questionText.innerText = question;
-          localStorage.setItem('question', question);
-        } else {
-          // Fallback to localStorage
-          const savedQuestion = localStorage.getItem("question");
-          questionText.innerText = savedQuestion || "Type the word: CAT";
-        }
+      .then(s => {
+        const q = s.val();
+        questionText.innerText = q || localStorage.getItem('question') || 'Type the word: CAT';
+        if (q) localStorage.setItem('question', q);
       })
-      .catch((error) => {
-        console.error('Error loading question:', error);
-        // Fallback to localStorage
-        const savedQuestion = localStorage.getItem("question");
-        questionText.innerText = savedQuestion || "Type the word: CAT";
-      });
+      .catch(() => { questionText.innerText = localStorage.getItem('question') || 'Type the word: CAT'; });
   } else {
-    // Fallback to localStorage
-    const savedQuestion = localStorage.getItem("question");
-    questionText.innerText = savedQuestion || "Type the word: CAT";
+    questionText.innerText = localStorage.getItem('question') || 'Type the word: CAT';
   }
 }
 
-// Load question when script loads
-loadQuestion();
-
-// Build keyboard with proper SPACE and BACK sizing
-console.log('Building keyboard...');
-keys.forEach(letter => {
-  const btn = document.createElement("button");
-  btn.innerText = letter;
-  btn.className = "key";
-  keyboardDiv.appendChild(btn);
-  btn.onclick = () => handleKey(letter);
-});
-
-// Create SPACE key with special class
-const spaceBtn = document.createElement("button");
-spaceBtn.innerText = "SPACE";
-spaceBtn.className = "key space-key";
-keyboardDiv.appendChild(spaceBtn);
-spaceBtn.onclick = () => handleKey("SPACE");
-
-// Create BACK key with special class
-const backBtn = document.createElement("button");
-backBtn.innerText = "BACK";
-backBtn.className = "key back-key";
-keyboardDiv.appendChild(backBtn);
-backBtn.onclick = () => handleKey("BACK");
-console.log('Keyboard built with', document.querySelectorAll('.key').length, 'keys');
-
-// Handle key press (both manual and gaze-based)
-function handleKey(label) {
-  console.log('Key pressed:', label);
-  if (label === "SPACE") {
-    output.value += " ";
-  } else if (label === "BACK") {
-    output.value = output.value.slice(0, -1);
-  } else {
-    output.value += label;
-  }
-  
-  // Auto-save answer to localStorage
-  localStorage.setItem("answer", output.value);
-}
-
-// Initialize WebGazer for eye tracking
+// ── WebGazer init ─────────────────────────────────────────
 async function initWebGazer() {
+  if (typeof webgazer === 'undefined') { setTimeout(initWebGazer, 1000); return; }
   try {
-    if (typeof webgazer === 'undefined') {
-      console.error('WebGazer not loaded');
-      setTimeout(initWebGazer, 1000);
-      return;
-    }
-
-    console.log('Initializing WebGazer...');
-
-    // Configure WebGazer
     await webgazer
       .setRegression('ridge')
       .setTracker('TFFacemesh')
-      .setGazeListener((data, elapsedTime) => {
-        if (!data || data.x === undefined || data.y === undefined) return;
-
-        let rawX = data.x;
-        let rawY = data.y;
-
-        // Initialize smoothing
-        if (smoothX === null) smoothX = rawX;
-        if (smoothY === null) smoothY = rawY;
-
-        // Exponential smoothing
-        smoothX = smoothX + smoothingFactor * (rawX - smoothX);
-        smoothY = smoothY + smoothingFactor * (rawY - smoothY);
-
-        const x = smoothX;
-        const y = smoothY;
-
-        let hoveredKey = null;
-        const allKeys = document.querySelectorAll(".key");
-
-        // Check which key is being looked at
-        allKeys.forEach(key => {
-          const rect = key.getBoundingClientRect();
-          if (
-            x >= rect.left &&
-            x <= rect.right &&
-            y >= rect.top &&
-            y <= rect.bottom
-          ) {
-            hoveredKey = key;
-          }
-        });
-
-        // Remove active class from all keys
-        allKeys.forEach(key => key.classList.remove("active"));
-
-        if (hoveredKey) {
-          hoveredKey.classList.add("active");
-
-          // Handle dwell time for gaze typing
-          if (currentKey === hoveredKey) {
-            if (!gazeStartTime) gazeStartTime = Date.now();
-
-            if (Date.now() - gazeStartTime > dwellTime && !typingLocked) {
-              typingLocked = true;
-              handleKey(hoveredKey.innerText);
-
-              // Prevent double typing
-              setTimeout(() => {
-                typingLocked = false;
-              }, 500);
-
-              gazeStartTime = null;
-              currentKey = null;
-            }
-          } else {
-            currentKey = hoveredKey;
-            gazeStartTime = Date.now();
-          }
-        } else {
-          currentKey = null;
-          gazeStartTime = null;
-        }
-      })
+      .setGazeListener(onGaze)
       .begin();
-
-    // Configure WebGazer settings
-    webgazer.setStabilization(true);
-    webgazer.setPredictionPoints(true);
     webgazer.showVideo(true);
     webgazer.showFaceOverlay(true);
     webgazer.showFaceFeedbackBox(true);
-    webgazer.showPredictionPoints(true);
+    webgazer.showPredictionPoints(false);
     webgazer.params.videoMirror = false;
 
-    console.log('WebGazer initialized successfully');
-    webgazerInitialized = true;
+    requestAnimationFrame(loop);
 
-    // Style the video container after it's created
     setTimeout(() => {
-      styleVideoContainer();
+      buildZones();
+      gazeReady = true;
+      styleCamera();
+      dbgEl.innerHTML = 'READY — stare at a key for 0.5s to type';
     }, 2000);
 
-  } catch (error) {
-    console.error('Error initializing WebGazer:', error);
-    const loading = document.getElementById('loading');
-    if (loading) {
-      loading.innerHTML = 'Failed to initialize eye tracking. Please refresh the page.';
-      loading.style.background = '#f8d7da';
-      loading.style.color = '#721c24';
-    }
+  } catch(e) {
+    dbgEl.innerHTML = 'WebGazer error — allow camera & refresh<br>' + e;
   }
 }
 
-// Style the WebGazer video container
-function styleVideoContainer() {
-  const videoContainer = document.getElementById("webgazerVideoContainer");
-
-  if (videoContainer) {
-    videoContainer.style.position = "fixed";
-    videoContainer.style.top = "20px";
-    videoContainer.style.left = "20px";
-    videoContainer.style.zIndex = "9999";
-    videoContainer.style.width = "220px";
-    videoContainer.style.height = "165px";
-    videoContainer.style.overflow = "hidden";
-    videoContainer.style.border = "2px solid #444";
-    videoContainer.style.borderRadius = "10px";
-    videoContainer.style.backgroundColor = "#000";
-    videoContainer.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
-
-    const video = document.querySelector('#webgazerVideoContainer video');
-    if (video) {
-      video.style.width = '100%';
-      video.style.height = '100%';
-      video.style.objectFit = 'cover';
-      video.style.position = 'absolute';
-      video.style.top = '50%';
-      video.style.left = '50%';
-      video.style.transform = 'translate(-50%, -50%) scaleX(1)';
-    }
-
-    const canvases = videoContainer.querySelectorAll('canvas');
-    canvases.forEach((canvas) => {
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      canvas.style.position = 'absolute';
-      canvas.style.top = '50%';
-      canvas.style.left = '50%';
-      canvas.style.transform = 'translate(-50%, -50%) scaleX(1)';
-      canvas.style.objectFit = 'cover';
-      canvas.style.pointerEvents = 'none';
-    });
-
-    // Hide loading indicator
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'none';
-  }
+function styleCamera() {
+  const vc = document.getElementById('webgazerVideoContainer');
+  if (!vc) return;
+  Object.assign(vc.style, {
+    position:'fixed', top:'54px', right:'16px', left:'auto',
+    width:'150px', height:'110px', overflow:'hidden',
+    border:'1px solid rgba(26,111,255,0.4)', borderRadius:'10px',
+    background:'#000', boxShadow:'0 0 20px rgba(26,111,255,0.2)', zIndex:'9999'
+  });
+  const v = vc.querySelector('video');
+  if (v) Object.assign(v.style,{width:'100%',height:'100%',objectFit:'cover',position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)'});
+  vc.querySelectorAll('canvas').forEach(c=>Object.assign(c.style,{width:'100%',height:'100%',position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none'}));
 }
 
-// Submit answer to Firebase
+// ── submit / clear ────────────────────────────────────────
 function submitAnswer() {
-  const answer = output.value;
-  
-  if (!answer.trim()) {
-    alert('Please type an answer before submitting');
-    return;
-  }
-  
+  const ans = output.value;
+  if (!ans.trim()) { alert('Nothing typed yet!'); return; }
   const user = firebase.auth().currentUser;
-  
-  if (!user) {
-    alert('You must be logged in to submit an answer');
-    return;
-  }
-
-  // Save to localStorage as backup
-  localStorage.setItem("answer", answer);
-
-  // Save to Firebase if available
+  if (!user) { alert('Not logged in'); return; }
+  localStorage.setItem('answer', ans);
   if (window.database) {
-    const answerData = {
-      text: answer,
-      studentId: user.uid,
-      studentEmail: user.email,
-      studentName: user.displayName || user.email,
-      timestamp: Date.now(),
-      question: questionText.innerText
-    };
-
-    window.database.ref('answers').push(answerData)
-      .then(() => {
-        alert("Answer submitted successfully: " + answer);
-      })
-      .catch((error) => {
-        console.error('Error submitting answer:', error);
-        alert("Answer saved locally but failed to sync to cloud. Please check your connection.\nYour answer: " + answer);
-      });
-  } else {
-    alert("Answer saved locally: " + answer);
-  }
+    window.database.ref('answers').push({
+      text:ans, studentId:user.uid, studentEmail:user.email,
+      studentName:user.displayName||user.email,
+      timestamp:Date.now(), question:questionText.innerText
+    }).then(()=>alert('✅ Submitted: '+ans)).catch(()=>alert('Saved locally: '+ans));
+  } else { alert('Saved locally: '+ans); }
 }
+function clearAnswer() { output.value=''; localStorage.removeItem('answer'); }
 
-// Clear the answer textarea
-function clearAnswer() {
-  output.value = '';
-  localStorage.removeItem('answer');
-}
-
-// Load saved answer from localStorage
-function loadSavedAnswer() {
-  const savedAnswer = localStorage.getItem('answer');
-  if (savedAnswer) {
-    output.value = savedAnswer;
-  }
-}
-
-// Initialize everything when page loads
+// ── boot ──────────────────────────────────────────────────
 window.addEventListener('load', () => {
-  console.log('Page loaded, initializing...');
-  
-  // Load any saved answer
-  loadSavedAnswer();
-  
-  // Start WebGazer after a short delay
-  setTimeout(initWebGazer, 1000);
-  
-  // Verify keyboard was built
-  const keyCount = document.querySelectorAll('.key').length;
-  console.log('Keyboard has', keyCount, 'keys');
-  
-  if (keyCount === 0) {
-    console.error('Keyboard not built! Rebuilding...');
-    // Rebuild keyboard if missing
-    keys.forEach(letter => {
-      const btn = document.createElement("button");
-      btn.innerText = letter;
-      btn.className = "key";
-      keyboardDiv.appendChild(btn);
-      btn.onclick = () => handleKey(letter);
-    });
-    
-    // Create SPACE key with special class
-    const spaceBtn = document.createElement("button");
-    spaceBtn.innerText = "SPACE";
-    spaceBtn.className = "key space-key";
-    keyboardDiv.appendChild(spaceBtn);
-    spaceBtn.onclick = () => handleKey("SPACE");
-
-    // Create BACK key with special class
-    const backBtn = document.createElement("button");
-    backBtn.innerText = "BACK";
-    backBtn.className = "key back-key";
-    keyboardDiv.appendChild(backBtn);
-    backBtn.onclick = () => handleKey("BACK");
-  }
+  buildKeyboard();
+  loadQuestion();
+  const saved = localStorage.getItem('answer');
+  if (saved) output.value = saved;
+  setTimeout(initWebGazer, 800);
 });
+window.addEventListener('beforeunload', () => { if(typeof webgazer!=='undefined') try{webgazer.end();}catch(e){} });
 
-// Clean up when page unloads
-window.addEventListener('beforeunload', () => {
-  if (webgazer && typeof webgazer.end === 'function') {
-    try {
-      webgazer.end();
-    } catch (e) {
-      console.log('Error stopping webgazer:', e);
-    }
-  }
-});
-
-// Handle window resize to adjust gaze tracking
-window.addEventListener('resize', () => {
-  // Reset smoothing on resize to prevent incorrect tracking
-  smoothX = null;
-  smoothY = null;
-});
-
-// Export functions for use in HTML
-window.handleKey = handleKey;
+window.typeKey      = typeKey;
 window.submitAnswer = submitAnswer;
-window.clearAnswer = clearAnswer;
+window.clearAnswer  = clearAnswer;

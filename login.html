@@ -2,210 +2,203 @@
 <html>
 <head>
   <title>EyeAble - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; overflow: auto; padding: 24px;
     }
+
     .auth-container {
-      background: white;
-      padding: 40px;
+      position: relative; z-index: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-      width: 420px;
-      max-width: 100%;
+      padding: 44px 40px 36px;
+      width: 420px; max-width: 100%;
       text-align: center;
+      box-shadow: 0 0 60px rgba(26,111,255,0.1);
     }
-    .auth-container h1 { color: #333; font-size: 32px; margin-bottom: 6px; }
-    .auth-container .subtitle { color: #888; font-size: 14px; margin-bottom: 24px; }
+
+    .auth-logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 32px; font-weight: 900;
+      color: var(--cyan); letter-spacing: 4px;
+      text-shadow: 0 0 28px rgba(26,111,255,0.2);
+      margin-bottom: 6px;
+    }
+    .auth-logo span { color: var(--blue); }
+    .auth-sub {
+      font-size: 13px; color: var(--muted);
+      letter-spacing: 1px; margin-bottom: 30px;
+    }
+
+    /* tabs */
     .tab-container {
-      display: flex;
+      display: flex; border-bottom: 1px solid var(--border);
       margin-bottom: 28px;
-      border-bottom: 2px solid #eee;
     }
     .tab {
-      flex: 1;
-      padding: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #999;
-      transition: color 0.2s;
+      flex: 1; padding: 12px; font-family: 'Orbitron', monospace;
+      font-size: 12px; letter-spacing: 2px;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; transition: color 0.2s;
+      box-shadow: none; border-radius: 0;
+      text-transform: uppercase;
     }
-    .tab.active { color: #667eea; border-bottom: 3px solid #667eea; margin-bottom: -2px; }
+    .tab:hover { transform: none; box-shadow: none; color: var(--text); }
+    .tab.active { color: var(--cyan); border-bottom: 2px solid var(--cyan); }
+
+    /* auth forms */
     .auth-form { display: none; }
     .auth-form.active { display: block; }
-    .input-group { margin-bottom: 18px; text-align: left; }
-    .input-group label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; font-size: 14px; }
-    .input-group input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: border-color 0.2s;
-    }
-    .input-group input:focus { outline: none; border-color: #667eea; }
-    .role-selector {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 22px;
-    }
-    .role-note { font-size: 13px; color: #888; margin-bottom: 18px; text-align: left; }
+
+    /* role selector */
+    .role-selector { display: flex; gap: 10px; margin-bottom: 22px; }
     .role-btn {
-      flex: 1;
-      padding: 12px;
-      border: 2px solid #ddd;
-      background: white;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-      color: #555;
+      flex: 1; padding: 10px;
+      font-family: 'Orbitron', monospace; font-size: 11px; letter-spacing: 1px;
+      background: var(--surface); color: var(--muted);
+      border: 1px solid var(--border); border-radius: 8px;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: none;
     }
-    .role-btn.teacher.active { background: #28a745; color: white; border-color: #28a745; }
-    .role-btn.student.active { background: #007bff; color: white; border-color: #007bff; }
+    .role-btn:hover { color: var(--text); border-color: var(--blue); transform: none; box-shadow: none; }
+    .role-btn.active {
+      background: rgba(26,111,255,0.15);
+      border-color: var(--cyan); color: var(--cyan);
+      box-shadow: 0 0 12px rgba(26,111,255,0.2);
+    }
+
+    /* input groups */
+    .input-group { margin-bottom: 16px; text-align: left; }
+    .input-group label {
+      display: block; margin-bottom: 5px;
+      font-family: 'Orbitron', monospace; font-size: 10px;
+      letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
+    }
+    .input-group input {
+      width: 100%; padding: 12px 16px;
+      font-size: 15px; font-weight: 600;
+    }
+
+    /* auth action button */
     .auth-btn {
-      width: 100%;
-      padding: 13px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 14px;
-      transition: background 0.2s;
+      width: 100%; padding: 14px;
+      font-family: 'Orbitron', monospace; font-size: 13px;
+      letter-spacing: 2px; margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--blue2), var(--blue));
+      border: 1px solid var(--cyan);
+      box-shadow: 0 0 20px rgba(26,111,255,0.3);
     }
-    .auth-btn:hover { background: #5a67d8; }
+    .auth-btn:hover { box-shadow: 0 0 32px rgba(26,111,255,0.5); }
+
+    /* google button */
     .google-btn {
-      width: 100%;
-      padding: 13px;
-      background: white;
-      color: #444;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 18px;
-      transition: all 0.2s;
+      width: 100%; padding: 12px;
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: none;
     }
-    .google-btn:hover { background: #f8f9fa; border-color: #4285f4; }
-    .google-btn img { width: 22px; height: 22px; }
+    .google-btn:hover { border-color: var(--blue); box-shadow: 0 0 14px rgba(26,111,255,0.2); transform: none; }
+    .google-btn img { width: 20px; height: 20px; }
+
+    /* divider */
     .divider {
-      display: flex;
-      align-items: center;
-      color: #bbb;
-      margin: 16px 0;
-      font-size: 13px;
+      display: flex; align-items: center;
+      color: var(--muted); margin: 18px 0; font-size: 12px;
     }
-    .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #eee; }
-    .divider span { padding: 0 10px; }
-    .error-msg {
-      color: #dc3545;
-      background: #f8d7da;
-      border-radius: 6px;
-      padding: 10px;
-      font-size: 14px;
-      margin-bottom: 12px;
-      display: none;
+    .divider::before, .divider::after {
+      content: ''; flex: 1; border-bottom: 1px solid var(--border);
     }
-    .success-msg {
-      color: #155724;
-      background: #d4edda;
-      border-radius: 6px;
-      padding: 10px;
-      font-size: 14px;
-      margin-bottom: 12px;
-      display: none;
+    .divider span { padding: 0 12px; letter-spacing: 1px; }
+
+    /* messages */
+    .error-message {
+      color: var(--muted); background: rgba(26,111,255,0.15);
+      border: 1px solid rgba(26,111,255,0.15);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; margin: 12px 0; display: none;
     }
-    .switch-link { color: #888; font-size: 14px; margin-top: 10px; }
-    .switch-link a { color: #667eea; text-decoration: none; font-weight: bold; cursor: pointer; }
-    .switch-link a:hover { text-decoration: underline; }
+    .success-message {
+      color: var(--blue); background: rgba(26,111,255,0.1);
+      border: 1px solid rgba(26,111,255,0.1);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; margin: 12px 0; display: none;
+    }
   </style>
 </head>
 <body>
+
   <div class="auth-container">
-    <h1>👁️ EyeAble</h1>
-    <p class="subtitle">Eye-tracking powered learning</p>
+    <div class="auth-logo">EYE<span>ABLE</span></div>
+    <div class="auth-sub">Eye-Gaze Assisted Learning</div>
 
     <div class="tab-container">
       <button class="tab active" onclick="switchTab('login')">Login</button>
       <button class="tab" onclick="switchTab('signup')">Sign Up</button>
     </div>
 
-    <!-- LOGIN FORM -->
+    <!-- Login -->
     <div id="loginForm" class="auth-form active">
+      <div class="role-selector">
+        <button class="role-btn teacher" onclick="setRole('teacher','login')">👩‍🏫 Teacher</button>
+        <button class="role-btn student active" onclick="setRole('student','login')">👨‍🎓 Student</button>
+      </div>
       <div class="input-group">
         <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="Enter your email">
+        <input type="email" id="loginEmail" placeholder="you@example.com">
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter your password">
+        <input type="password" id="loginPassword" placeholder="••••••••">
       </div>
-      <div class="error-msg" id="loginError"></div>
       <button class="auth-btn" onclick="loginWithEmail()">Login</button>
       <div class="divider"><span>OR</span></div>
-      <p class="role-note">Signing in with Google? Choose your role first:</p>
-      <div class="role-selector">
-        <button class="role-btn teacher" id="loginTeacherBtn" onclick="setLoginRole('teacher')">👩‍🏫 Teacher</button>
-        <button class="role-btn student active" id="loginStudentBtn" onclick="setLoginRole('student')">👨‍🎓 Student</button>
-      </div>
       <button class="google-btn" onclick="loginWithGoogle()">
-        <img src="https://www.google.com/favicon.ico" alt="Google">
-        Continue with Google
+        <img src="https://www.google.com/favicon.ico" alt="G"> Continue with Google
       </button>
-      <div class="switch-link">Don't have an account? <a onclick="switchTab('signup')">Sign up</a></div>
+      <div class="error-message" id="loginError"></div>
     </div>
 
-    <!-- SIGNUP FORM -->
+    <!-- Sign Up -->
     <div id="signupForm" class="auth-form">
       <p class="role-note">Select your role:</p>
       <div class="role-selector">
-        <button class="role-btn teacher" id="signupTeacherBtn" onclick="setSignupRole('teacher')">👩‍🏫 Teacher</button>
-        <button class="role-btn student active" id="signupStudentBtn" onclick="setSignupRole('student')">👨‍🎓 Student</button>
+        <button class="role-btn teacher" onclick="setRole('teacher','signup')">👩‍🏫 Teacher</button>
+        <button class="role-btn student active" onclick="setRole('student','signup')">👨‍🎓 Student</button>
       </div>
       <div class="input-group">
         <label>Full Name</label>
-        <input type="text" id="signupName" placeholder="Enter your name">
+        <input type="text" id="signupName" placeholder="Your name">
       </div>
       <div class="input-group">
         <label>Email</label>
-        <input type="email" id="signupEmail" placeholder="Enter your email">
+        <input type="email" id="signupEmail" placeholder="you@example.com">
       </div>
       <div class="input-group">
         <label>Password</label>
-        <input type="password" id="signupPassword" placeholder="At least 6 characters">
+        <input type="password" id="signupPassword" placeholder="Min. 6 characters">
       </div>
       <div class="input-group">
         <label>Confirm Password</label>
         <input type="password" id="signupConfirmPassword" placeholder="Repeat password">
+        <input type="password" id="signupConfirmPassword" placeholder="Repeat password">
       </div>
-      <div class="error-msg" id="signupError"></div>
-      <div class="success-msg" id="signupSuccess"></div>
       <button class="auth-btn" onclick="signupWithEmail()">Create Account</button>
       <div class="divider"><span>OR</span></div>
+      <div class="divider"><span>OR</span></div>
       <button class="google-btn" onclick="loginWithGoogle()">
-        <img src="https://www.google.com/favicon.ico" alt="Google">
-        Sign up with Google
+        <img src="https://www.google.com/favicon.ico" alt="G"> Sign up with Google
       </button>
-      <div class="switch-link">Already have an account? <a onclick="switchTab('login')">Login</a></div>
+      <div class="success-message" id="signupSuccess"></div>
+      <div class="error-message" id="signupError"></div>
     </div>
   </div>
 
@@ -220,137 +213,131 @@
       projectId: "eyeable-2026",
       storageBucket: "eyeable-2026.firebasestorage.app",
       messagingSenderId: "29944050006",
-      appId: "1:29944050006:web:33515697c3aac35432e6f7",
-      measurementId: "G-YMPV5EPEDV"
+      appId: "1:29944050006:web:33515697c3aac35432e6f7"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const database = firebase.database();
 
-    let loginRole = 'student';   // used only for Google sign-in on login tab
-    let signupRole = 'student';  // used for all signup paths
-
-    auth.signOut(); // always force fresh login
+    let selectedRole = 'student';
+    let currentForm  = 'login';
 
     function switchTab(tab) {
+      currentForm = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-      if (tab === 'login') {
-        document.querySelectorAll('.tab')[0].classList.add('active');
-        document.getElementById('loginForm').classList.add('active');
-      } else {
-        document.querySelectorAll('.tab')[1].classList.add('active');
-        document.getElementById('signupForm').classList.add('active');
-      }
+      document.querySelector('.' + tab + '-tab').classList.add('active');
+      document.getElementById('loginForm').classList.toggle('active',  tab==='login');
+      document.getElementById('signupForm').classList.toggle('active', tab==='signup');
+      setRole('student', tab);
     }
 
-    function setLoginRole(role) {
-      loginRole = role;
-      document.getElementById('loginTeacherBtn').classList.toggle('active', role === 'teacher');
-      document.getElementById('loginStudentBtn').classList.toggle('active', role === 'student');
-    }
-
-    function setSignupRole(role) {
-      signupRole = role;
-      document.getElementById('signupTeacherBtn').classList.toggle('active', role === 'teacher');
-      document.getElementById('signupStudentBtn').classList.toggle('active', role === 'student');
-    }
-
-    async function loginWithEmail() {
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      hideMsg('loginError');
-
-      if (!email || !password) { showError('loginError', 'Please enter email and password.'); return; }
-
-      try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
-        const snap = await database.ref('users/' + result.user.uid).once('value');
-        const userData = snap.val();
-        redirectToDashboard(userData ? userData.role : 'student');
-      } catch (err) {
-        showError('loginError', friendlyAuthError(err));
-      }
+    function setRole(role, form) {
+      selectedRole = role;
+      const sel = form==='login' ? '#loginForm' : '#signupForm';
+      document.querySelectorAll(sel + ' .role-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(sel + ' .role-btn.' + role).classList.add('active');
     }
 
     async function signupWithEmail() {
-      const name = document.getElementById('signupName').value.trim();
-      const email = document.getElementById('signupEmail').value.trim();
-      const password = document.getElementById('signupPassword').value;
-      const confirm = document.getElementById('signupConfirmPassword').value;
-      hideMsg('signupError'); hideMsg('signupSuccess');
-
-      if (!name || !email || !password || !confirm) { showError('signupError', 'Please fill in all fields.'); return; }
-      if (password.length < 6) { showError('signupError', 'Password must be at least 6 characters.'); return; }
-      if (password !== confirm) { showError('signupError', 'Passwords do not match.'); return; }
-
+      const name  = document.getElementById('signupName').value;
+      const email = document.getElementById('signupEmail').value;
+      const pass  = document.getElementById('signupPassword').value;
+      const conf  = document.getElementById('signupConfirmPassword').value;
+      hide('signupError'); hide('signupSuccess');
+      if (!name||!email||!pass||!conf) return showErr('signupError','Please fill in all fields');
+      if (pass.length < 6)             return showErr('signupError','Password must be at least 6 characters');
+      if (pass !== conf)               return showErr('signupError','Passwords do not match');
       try {
-        const result = await auth.createUserWithEmailAndPassword(email, password);
-        await result.user.updateProfile({ displayName: name });
-        await database.ref('users/' + result.user.uid).set({
-          name, email, role: signupRole, createdAt: new Date().toISOString()
-        });
-        showSuccess('signupSuccess', 'Account created! Redirecting...');
-        setTimeout(() => redirectToDashboard(signupRole), 1200);
-      } catch (err) {
-        showError('signupError', friendlyAuthError(err));
-      }
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        await cred.user.updateProfile({ displayName: name });
+        await database.ref('users/' + cred.user.uid).set({ name, email, role: selectedRole, createdAt: new Date().toISOString() });
+        showOk('signupSuccess','Account created! Redirecting...');
+        setTimeout(() => redirect(selectedRole), 1500);
+      } catch(e) { showErr('signupError', friendlyError(e)); }
+    }
+
+    async function loginWithEmail() {
+      const email = document.getElementById('loginEmail').value;
+      const pass  = document.getElementById('loginPassword').value;
+      hide('loginError');
+      if (!email||!pass) return showErr('loginError','Please enter email and password');
+      try {
+        const cred = await auth.signInWithEmailAndPassword(email, pass);
+        // Always read role from DB — never trust selectedRole UI state for existing users
+        const snap = await database.ref('users/' + cred.user.uid).once('value');
+        const data = snap.val();
+        if (data && data.role) {
+          // Role mismatch: user selected Teacher but their account is Student (or vice versa)
+          if (data.role !== selectedRole) {
+            await auth.signOut();
+            showErr('loginError', `This account is registered as a ${data.role}. Please select the correct role above.`);
+            return;
+          }
+          redirect(data.role);
+        } else {
+          // New user with no record yet — create one with the role they selected in UI
+          await database.ref('users/' + cred.user.uid).set({
+            name: cred.user.displayName || email,
+            email: email,
+            role: selectedRole,
+            createdAt: new Date().toISOString()
+          });
+          redirect(selectedRole);
+        }
+      } catch(e) { showErr('loginError', friendlyError(e)); }
     }
 
     async function loginWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      // Determine which role to use based on active tab
-      const isSignupTab = document.getElementById('signupForm').classList.contains('active');
-      const roleToUse = isSignupTab ? signupRole : loginRole;
-
+      provider.setCustomParameters({ prompt:'select_account', authuser:'-1' });
       try {
         const result = await auth.signInWithPopup(provider);
-        const snap = await database.ref('users/' + result.user.uid).once('value');
+        const snap   = await database.ref('users/' + result.user.uid).once('value');
         if (!snap.exists()) {
           await database.ref('users/' + result.user.uid).set({
-            name: result.user.displayName,
-            email: result.user.email,
-            role: roleToUse,
-            createdAt: new Date().toISOString()
+            name: result.user.displayName, email: result.user.email,
+            role: selectedRole, createdAt: new Date().toISOString()
           });
-          redirectToDashboard(roleToUse);
-        } else {
-          redirectToDashboard(snap.val().role);
-        }
-      } catch (err) {
-        showError('loginError', 'Google sign-in failed: ' + err.message);
+          redirect(selectedRole);
+        } else { redirect(snap.val().role); }
+      } catch(e) {
+        showErr(currentForm==='login' ? 'loginError' : 'signupError', 'Google sign-in failed: ' + e.message);
       }
     }
 
-    function redirectToDashboard(role) {
-      if (role === 'teacher') window.location.href = 'teacher.html';
-      else window.location.href = 'index.html';
+    function redirect(role) {
+      if (role === 'teacher') {
+        localStorage.setItem('isLoggedIn','true');
+        localStorage.setItem('role', role);
+        window.location.href = 'teacher.html';
+      } else if (role === 'student') {
+        localStorage.setItem('isLoggedIn','true');
+        localStorage.setItem('role', role);
+        window.location.href = 'index.html';
+      } else {
+        // Unknown role — show error instead of redirecting anywhere
+        const errId = currentForm === 'login' ? 'loginError' : 'signupError';
+        showErr(errId, 'Account has no role assigned. Please contact your administrator.');
+      }
     }
 
-    function friendlyAuthError(err) {
+    function friendlyError(e) {
       const map = {
-        'auth/user-not-found': 'No account found with this email.',
-        'auth/wrong-password': 'Incorrect password.',
-        'auth/invalid-email': 'Invalid email address.',
-        'auth/email-already-in-use': 'This email is already registered.',
-        'auth/weak-password': 'Password is too weak.',
-        'auth/user-disabled': 'This account has been disabled.',
-        'auth/invalid-credential': 'Email or password is incorrect.',
+        'auth/email-already-in-use': 'Email is already registered.',
+        'auth/invalid-email':        'Invalid email address.',
+        'auth/weak-password':        'Password is too weak.',
+        'auth/user-not-found':       'User not found.',
+        'auth/wrong-password':       'Incorrect password.',
+        'auth/user-disabled':        'This account has been disabled.',
       };
-      return map[err.code] || err.message;
+      return map[e.code] || e.message;
     }
 
-    function showError(id, msg) {
-      const el = document.getElementById(id);
-      el.textContent = msg; el.style.display = 'block';
-    }
-    function showSuccess(id, msg) {
-      const el = document.getElementById(id);
-      el.textContent = msg; el.style.display = 'block';
-    }
-    function hideMsg(id) { document.getElementById(id).style.display = 'none'; }
+    function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+    function showOk(id, msg)  { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+    function hide(id)         { document.getElementById(id).style.display='none'; }
+
+    setRole('student','login');
   </script>
 </body>
 </html>

@@ -2,234 +2,170 @@
 <html>
 <head>
   <title>EyeAble - Student</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg:      #050d1a;
+      --card:    #0f2040;
+      --blue:    #1a6fff;
+      --blue2:   #0d47d4;
+      --cyan:    #00cfff;
+      --text:    #e8f0ff;
+      --muted:   #6b84b0;
+      --danger:  #ff3b5c;
+      --success: #00ffaa;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden; /* NO SCROLL */
-      font-family: Arial, sans-serif;
-      background: #eef6fb;
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      width: 100vw; height: 100vh;
+      overflow: hidden;
     }
 
-    /* ── TOP BAR ── */
-    #topBar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 16px;
-      background: white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      height: 48px;
-    }
-    #topBar .brand { font-size: 17px; font-weight: bold; color: #333; }
-    #userInfo { font-size: 13px; color: #555; }
-    .logout-btn {
-      background: #dc3545; color: white; border: none;
-      padding: 6px 16px; border-radius: 6px; font-size: 13px;
-      cursor: pointer; font-weight: bold;
-    }
-    .logout-btn:hover { background: #c82333; }
-
-    /* ── MAIN LAYOUT ── */
-    #main {
-      display: flex;
-      flex-direction: column;
-      /* subtract top bar height */
-      height: calc(100vh - 48px);
-      padding: 8px 12px;
-      gap: 6px;
-    }
-
-    /* ── ASSIGNMENT ROW ── */
-    #assignmentRow {
-      display: flex;
-      gap: 8px;
-      align-items: stretch;
-      flex-shrink: 0;
-    }
-    #assignmentRow h3 {
-      font-size: 13px;
-      color: #888;
-      white-space: nowrap;
-      align-self: center;
-      margin-right: 4px;
-    }
-    #assignmentList {
-      display: flex;
-      gap: 8px;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      flex: 1;
-      scrollbar-width: none;
-    }
-    #assignmentList::-webkit-scrollbar { display: none; }
-    .assignment-card {
-      background: white;
-      border: 2px solid #ddd;
-      border-radius: 10px;
-      padding: 8px 16px;
-      cursor: pointer;
-      white-space: nowrap;
-      font-size: 14px;
-      font-weight: bold;
-      color: #444;
-      flex-shrink: 0;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .assignment-card:hover { border-color: #667eea; }
-    .assignment-card.selected { border-color: #667eea; background: #f0f3ff; color: #667eea; }
-    .no-assignments { font-size: 13px; color: #aaa; align-self: center; }
-
-    /* ── QUESTION BOX ── */
-    #questionBox {
-      background: #f0f4ff;
-      border-left: 4px solid #667eea;
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 20px;
-      font-weight: bold;
-      color: #333;
-      text-align: center;
-      flex-shrink: 0;
-    }
-    #questionBox.empty { color: #bbb; font-weight: normal; font-size: 15px; border-left-color: #ccc; }
-
-    /* ── ANSWER + BUTTONS ── */
-    #answerRow {
-      display: flex;
-      gap: 10px;
-      align-items: stretch;
-      flex-shrink: 0;
-    }
-    textarea#output {
-      flex: 1;
-      padding: 10px 14px;
-      font-size: 22px;
-      border: 2px solid #ddd;
-      border-radius: 10px;
-      resize: none;
-      font-family: Arial, sans-serif;
-      height: 60px;
-    }
-    textarea#output:focus { outline: none; border-color: #667eea; }
-    .action-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    .btn {
-      padding: 0 20px;
-      font-size: 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      height: 27px;
-      white-space: nowrap;
-    }
-    .btn-submit { background: #28a745; color: white; }
-    .btn-submit:hover { background: #218838; }
-    .btn-clear  { background: #6c757d; color: white; }
-    .btn-clear:hover  { background: #5a6268; }
-
-    /* ── KEYBOARD ── */
-    #keyboard {
-      flex: 1; /* takes remaining vertical space */
-      display: grid;
-      grid-template-columns: repeat(10, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 6px;
-      background: #e4e4e4;
-      border-radius: 12px;
-      padding: 10px;
-      min-height: 0; /* allow shrink */
-    }
-    .key {
-      font-size: clamp(14px, 2vw, 22px);
-      font-weight: bold;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      background: white;
-      cursor: pointer;
-      transition: all 0.12s;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      grid-column: span 1;
-      user-select: none;
-    }
-    .key.space-key { grid-column: span 4; background: #ececec; }
-    .key.back-key  { grid-column: span 2; background: #ffebeb; }
-    .key:hover { background: #e0e0e0; transform: scale(1.05); }
-    .key.space-key:hover { background: #ddd; }
-    .key.back-key:hover  { background: #ffd6d6; }
-    .key.active {
-      background: #ffd700 !important;
-      border-color: #ffa500 !important;
-      transform: scale(1.08);
-      box-shadow: 0 0 14px rgba(255,200,0,0.6);
-    }
-
-    /* ── WEBGAZER ── */
-    /* Override ALL webgazer positioning — pin to bottom-right */
-    #webgazerVideoContainer {
-      position: fixed !important;
-      bottom: 12px !important;
-      right: 12px !important;
-      top: auto !important;
-      left: auto !important;
-      width: 240px !important;
-      height: 180px !important;
-      z-index: 9999 !important;
-      border: 3px solid #667eea !important;
-      border-radius: 12px !important;
-      overflow: hidden !important;
-      background: #000 !important;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
-    }
-    #webgazerVideoContainer video {
-      position: absolute !important;
-      top: 0 !important; left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      transform: none !important; /* remove any mirror/scale */
-    }
-    #webgazerVideoContainer canvas {
-      position: absolute !important;
-      top: 0 !important; left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      pointer-events: none !important;
-      transform: none !important;
-    }
-    /* Gaze dot */
-    #webgazerGazeDot {
-      width: 18px !important;
-      height: 18px !important;
-      border-radius: 50% !important;
-      background: rgba(255, 50, 50, 0.85) !important;
-      box-shadow: 0 0 10px 4px rgba(255,100,0,0.4) !important;
-    }
-
-    /* ── LOADING OVERLAY ── */
-    #loadingOverlay {
+    body::before {
+      content: '';
       position: fixed; inset: 0;
-      background: rgba(238,246,251,0.92);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 20000;
+      background-image:
+        linear-gradient(rgba(26,111,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26,111,255,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
     }
-    .loading-box {
-      background: white;
-      padding: 32px 48px;
+
+    /* ── top bar ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 52px;
+      background: rgba(5,13,26,0.95);
+      border-bottom: 1px solid rgba(26,111,255,0.25);
+      backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 1000;
+    }
+    .logo { font-family:'Orbitron',monospace; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:2px; text-shadow:0 0 20px rgba(0,207,255,0.6); }
+    .logo span { color:var(--blue); }
+    #userInfo { font-size:12px; color:var(--muted); }
+    .logout-btn { background:transparent; color:var(--danger); border:1px solid var(--danger); padding:5px 14px; border-radius:6px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:1px; }
+    .logout-btn:hover { background:rgba(255,59,92,0.15); }
+
+    /* ── answer bar (fixed at top below topbar) ── */
+    .answer-bar {
+      position: fixed; top: 52px; left: 0; right: 0;
+      background: rgba(5,13,26,0.92);
+      border-bottom: 1px solid rgba(26,111,255,0.2);
+      padding: 8px 20px; z-index: 900;
+      display: flex; gap: 16px; align-items: center;
+    }
+    .q-label { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:2px; color:var(--cyan); white-space:nowrap; }
+    #questionText { font-size:15px; font-weight:600; color:var(--text); flex:1; }
+    #output {
+      width: 260px; padding: 6px 14px;
+      font-family:'Orbitron',monospace; font-size:18px; font-weight:700;
+      letter-spacing:4px; color:var(--cyan);
+      background:var(--card); border:1px solid rgba(26,111,255,0.4);
+      border-radius:8px; outline:none; resize:none; height:40px;
+    }
+
+    /* ── full-screen key canvas ── */
+    #keyCanvas {
+      position: fixed;
+      top: 110px; left: 0; right: 0; bottom: 0;
+      z-index: 1;
+    }
+
+    /* ── individual key ── */
+    .key {
+      position: absolute;
+      width: 80px; height: 80px;
+      font-family:'Orbitron',monospace; font-size:22px; font-weight:700;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid rgba(26,111,255,0.3);
       border-radius: 16px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
-      text-align: center;
-      border: 2px solid #667eea;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+      transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
+      user-select: none;
+      overflow: hidden;
+    }
+    .key::after {
+      content:''; position:absolute; bottom:0; left:0; height:4px;
+      width: var(--dwell-progress,0%);
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      border-radius: 0 0 0 16px;
+      box-shadow: 0 0 8px var(--cyan);
+      transition: width 0.05s linear;
+    }
+    .key.active {
+      border-color: var(--cyan);
+      box-shadow: 0 0 28px rgba(0,207,255,0.5), 0 0 60px rgba(0,207,255,0.15);
+      transform: scale(1.12);
+      color: var(--cyan);
+    }
+    .key.space-key { width:160px; height:60px; font-size:13px; letter-spacing:3px; background:rgba(26,111,255,0.08); }
+    .key.back-key  { width:120px; height:60px; font-size:13px; letter-spacing:2px; background:rgba(255,59,92,0.07); border-color:rgba(255,59,92,0.25); color:#ff8fa3; }
+
+    /* submit floats bottom-center */
+    #submitBtn {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 1000;
+      padding: 14px 52px;
+      font-family:'Orbitron',monospace; font-size:14px; font-weight:700; letter-spacing:2px;
+      background: linear-gradient(135deg, var(--blue2), var(--blue));
+      color: white; border: 1px solid var(--cyan); border-radius:10px;
+      cursor:pointer; overflow:hidden;
+      box-shadow: 0 0 24px rgba(26,111,255,0.3);
+    }
+    #submitBtn::after {
+      content:''; position:absolute; bottom:0; left:0; height:4px;
+      width:var(--dwell-progress,0%);
+      background: linear-gradient(90deg, var(--cyan), white);
+      box-shadow: 0 0 8px var(--cyan);
+      transition: width 0.05s linear;
+    }
+    #submitBtn.gazing { box-shadow:0 0 40px rgba(0,207,255,0.6), 0 0 80px rgba(26,111,255,0.2); transform:translateX(-50%) scale(1.04); }
+    .gaze-hint { display:block; font-size:9px; letter-spacing:1px; opacity:0.6; margin-top:3px; font-weight:400; }
+
+    #clearBtn {
+      position: fixed; bottom: 24px; right: 24px; z-index:1000;
+      padding:10px 24px; font-family:'Orbitron',monospace; font-size:12px; letter-spacing:2px;
+      background:transparent; color:var(--muted); border:1px solid rgba(107,132,176,0.3); border-radius:8px; cursor:pointer;
+    }
+    #clearBtn:hover { border-color:var(--muted); color:var(--text); }
+
+    /* debug */
+    #dbg {
+      position:fixed; bottom:12px; left:12px; z-index:99998;
+      background:rgba(5,13,26,0.9); color:#00ffaa;
+      font-family:'Courier New',monospace; font-size:11px;
+      padding:8px 12px; border-radius:8px; border:1px solid rgba(0,255,170,0.2);
+      line-height:1.8; pointer-events:none;
+    }
+
+    /* gaze pointer */
+    #gazePointer {
+      position:fixed; width:70px; height:70px; border-radius:50%;
+      background:rgba(0,207,255,0.15); border:2px solid var(--cyan);
+      box-shadow:0 0 0 6px rgba(0,207,255,0.07), 0 0 24px rgba(0,207,255,0.4);
+      pointer-events:none; z-index:99999; transform:translate(-50%,-50%);
+      transition: left 0.06s linear, top 0.06s linear;
+    }
+    #gazePointer::after {
+      content:''; position:absolute; width:8px; height:8px; border-radius:50%;
+      background:var(--cyan); top:50%; left:50%; transform:translate(-50%,-50%);
+      box-shadow:0 0 6px var(--cyan);
+    }
+
+    #webgazerVideoContainer {
+      position:fixed !important; top:54px !important; right:16px !important;
+      left:auto !important; width:150px !important; height:110px !important;
+      border:1px solid rgba(26,111,255,0.4) !important; border-radius:10px !important;
+      overflow:hidden !important; background:#000 !important;
+      box-shadow:0 0 16px rgba(26,111,255,0.15) !important; z-index:9999 !important;
     }
     .loading-box .spinner { font-size: 42px; margin-bottom: 12px; }
     .loading-box p { color: #555; font-size: 16px; }
@@ -238,57 +174,37 @@
 </head>
 <body>
 
-  <!-- Loading overlay -->
-  <div id="loadingOverlay">
-    <div class="loading-box">
-      <div class="spinner">👁️</div>
-      <p>Starting eye tracking...</p>
-      <small>Please allow camera access when prompted</small>
-    </div>
+  <div class="topbar">
+    <div class="logo">EYE<span>ABLE</span></div>
+    <div id="userInfo">Authenticating...</div>
+    <button class="logout-btn" onclick="logout()">LOGOUT</button>
   </div>
 
-  <!-- Top bar -->
-  <div id="topBar">
-    <div class="brand">👁️ EyeAble</div>
-    <div id="userInfo">Loading...</div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+  <div class="answer-bar">
+    <div class="q-label">◈ Q</div>
+    <div id="questionText">Loading...</div>
+    <div class="q-label">◈ ANS</div>
+    <textarea id="output" rows="1" placeholder="_ _ _"></textarea>
   </div>
 
-  <!-- Main content — no scroll -->
-  <div id="main">
+  <div id="keyCanvas"></div>
 
-    <!-- Assignment selector row -->
-    <div id="assignmentRow">
-      <h3>Assignment:</h3>
-      <div id="assignmentList"><span class="no-assignments">Loading...</span></div>
-    </div>
+  <div id="gazePointer"></div>
+  <div id="dbg">Initialising...</div>
 
-    <!-- Active question -->
-    <div id="questionBox" class="empty">← Select an assignment above</div>
+  <button id="submitBtn" onclick="submitAnswer()">
+    SUBMIT
+    <span class="gaze-hint">👁 STARE 0.5s</span>
+  </button>
+  <button id="clearBtn" onclick="clearAnswer()">CLEAR</button>
 
-    <!-- Answer textarea + buttons -->
-    <div id="answerRow">
-      <textarea id="output" rows="2" placeholder="Your answer will appear here as you type..."></textarea>
-      <div class="action-btns">
-        <button class="btn btn-submit" onclick="submitAnswer()">✅ Submit</button>
-        <button class="btn btn-clear"  onclick="clearAnswer()">🗑 Clear</button>
-      </div>
-    </div>
-
-    <!-- Keyboard -->
-    <div id="keyboard"></div>
-
-  </div>
-
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <!-- WebGazer -->
   <script src="https://cdn.jsdelivr.net/npm/webgazer@2.1.0/dist/webgazer.min.js"></script>
 
+
   <script>
-    // ── FIREBASE ──────────────────────────────────────────────
     const firebaseConfig = {
       apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
       authDomain: "eyeable-2026.firebaseapp.com",
@@ -296,268 +212,41 @@
       projectId: "eyeable-2026",
       storageBucket: "eyeable-2026.firebasestorage.app",
       messagingSenderId: "29944050006",
-      appId: "1:29944050006:web:33515697c3aac35432e6f7",
-      measurementId: "G-YMPV5EPEDV"
+      appId: "1:29944050006:web:33515697c3aac35432e6f7"
     };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.database();
+    const auth     = firebase.auth();
+    const database = firebase.database();
+    window.firebase  = firebase;
+    window.database  = database;
 
-    let currentAssignment = null;
-    let currentUser       = null;
-
-    auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged(user => {
       if (!user) { window.location.href = 'login.html'; return; }
-      currentUser = user;
-
-      const snap = await db.ref('users/' + user.uid).once('value');
-      let userData = snap.val();
-
-      if (!userData) {
-        await db.ref('users/' + user.uid).set({
-          name: user.displayName || user.email,
-          email: user.email, role: 'student',
-          createdAt: new Date().toISOString()
-        });
-        userData = { role: 'student', name: user.displayName || user.email };
-      }
-
-      if (userData.role === 'teacher') { window.location.href = 'teacher.html'; return; }
-
-      document.getElementById('userInfo').textContent =
-        (userData.name || user.email) + ' (Student)';
-      loadAssignments();
-    });
-
-    // ── ASSIGNMENTS ───────────────────────────────────────────
-    async function loadAssignments() {
-      const snap = await db.ref('assignments').once('value');
-      const data = snap.val();
-      const div  = document.getElementById('assignmentList');
-
-      if (!data) {
-        div.innerHTML = '<span class="no-assignments">No assignments yet</span>';
-        return;
-      }
-
-      const items = Object.entries(data).sort((a, b) => b[1].createdAt - a[1].createdAt);
-      div.innerHTML = '';
-      items.forEach(([id, a]) => {
-        const card = document.createElement('div');
-        card.className = 'assignment-card';
-        card.textContent = a.title;
-        card.title = a.description || '';
-        card.onclick = () => selectAssignment(id, a, card);
-        div.appendChild(card);
+      database.ref('users/' + user.uid).once('value').then(snap => {
+        const data = snap.val();
+        if (!data) {
+          database.ref('users/' + user.uid).set({
+            name: user.displayName || user.email,
+            email: user.email, role: 'student',
+            createdAt: new Date().toISOString()
+          });
+          document.getElementById('userInfo').innerText = user.email + ' · Student';
+          return;
+        }
+        if (data.role === 'teacher') { window.location.href = 'teacher.html'; return; }
+        if (data.role !== 'student') { auth.signOut(); window.location.href = 'login.html'; return; }
+        document.getElementById('userInfo').innerText = (data.name || user.email) + ' · Student';
+      }).catch(() => {
+        document.getElementById('userInfo').innerText = user.email;
       });
-    }
-
-    function selectAssignment(id, assignment, cardEl) {
-      currentAssignment = { id, ...assignment };
-      document.querySelectorAll('.assignment-card').forEach(c => c.classList.remove('selected'));
-      cardEl.classList.add('selected');
-
-      const qbox = document.getElementById('questionBox');
-      qbox.textContent = assignment.description
-        ? assignment.title + ' — ' + assignment.description
-        : assignment.title;
-      qbox.classList.remove('empty');
-
-      document.getElementById('output').value = '';
-    }
-
-    // ── KEYBOARD BUILD ────────────────────────────────────────
-    const keyboardDiv = document.getElementById('keyboard');
-    const output      = document.getElementById('output');
-
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter => {
-      const btn = document.createElement('button');
-      btn.textContent = letter;
-      btn.className   = 'key';
-      btn.onclick     = () => handleKey(letter);
-      keyboardDiv.appendChild(btn);
     });
-
-    // SPACE spans 4 cols, BACK spans 2 cols — row 3 has 6 letter keys + these = 10 cols
-    const spaceBtn = document.createElement('button');
-    spaceBtn.textContent = 'SPACE';
-    spaceBtn.className   = 'key space-key';
-    spaceBtn.onclick     = () => handleKey('SPACE');
-    keyboardDiv.appendChild(spaceBtn);
-
-    const backBtn = document.createElement('button');
-    backBtn.textContent = 'BACK';
-    backBtn.className   = 'key back-key';
-    backBtn.onclick     = () => handleKey('BACK');
-    keyboardDiv.appendChild(backBtn);
-
-    function handleKey(label) {
-      if (label === 'SPACE')     output.value += ' ';
-      else if (label === 'BACK') output.value = output.value.slice(0, -1);
-      else                       output.value += label;
-    }
-    window.handleKey = handleKey;
-
-    // ── SUBMIT / CLEAR ────────────────────────────────────────
-    async function submitAnswer() {
-      const answer = output.value.trim();
-      if (!answer)            { alert('Please type an answer first.'); return; }
-      if (!currentAssignment) { alert('Please select an assignment first.'); return; }
-      if (!currentUser)       { alert('You must be logged in.'); return; }
-
-      try {
-        await db.ref('answers').push({
-          text:            answer,
-          assignmentId:    currentAssignment.id,
-          assignmentTitle: currentAssignment.title,
-          question:        currentAssignment.title,
-          studentId:       currentUser.uid,
-          studentEmail:    currentUser.email,
-          studentName:     currentUser.displayName || currentUser.email,
-          timestamp:       Date.now()
-        });
-        alert(`✅ Submitted!\nAssignment: ${currentAssignment.title}\nAnswer: ${answer}`);
-        output.value = '';
-      } catch (e) {
-        alert('Error submitting: ' + e.message);
-      }
-    }
-    window.submitAnswer = submitAnswer;
-
-    function clearAnswer() { output.value = ''; }
-    window.clearAnswer = clearAnswer;
-
-    // ── EYE TRACKING ──────────────────────────────────────────
-    let currentKey   = null;
-    let gazeStart    = null;
-    let typingLocked = false;
-    let smoothX = null, smoothY = null;
-    const SMOOTH = 0.15;
-    const DWELL  = 600; // ms
-
-    async function initWebGazer() {
-      if (typeof webgazer === 'undefined') { setTimeout(initWebGazer, 1000); return; }
-
-      try {
-        await webgazer
-          .setRegression('ridge')
-          .setTracker('TFFacemesh')
-          .setGazeListener((data) => {
-            if (!data) return;
-
-            // Smooth gaze coordinates
-            if (smoothX === null) { smoothX = data.x; smoothY = data.y; }
-            smoothX += SMOOTH * (data.x - smoothX);
-            smoothY += SMOOTH * (data.y - smoothY);
-
-            // Hit-test every key
-            const allKeys = document.querySelectorAll('.key');
-            let hit = null;
-            allKeys.forEach(k => {
-              k.classList.remove('active');
-              const r = k.getBoundingClientRect();
-              if (smoothX >= r.left && smoothX <= r.right &&
-                  smoothY >= r.top  && smoothY <= r.bottom) hit = k;
-            });
-
-            if (hit) {
-              hit.classList.add('active');
-              if (currentKey === hit) {
-                if (!gazeStart) gazeStart = Date.now();
-                if (!typingLocked && Date.now() - gazeStart > DWELL) {
-                  typingLocked = true;
-                  handleKey(hit.textContent);
-                  setTimeout(() => { typingLocked = false; }, 600);
-                  gazeStart = null; currentKey = null;
-                }
-              } else {
-                currentKey = hit;
-                gazeStart  = Date.now();
-              }
-            } else {
-              currentKey = null; gazeStart = null;
-            }
-          })
-          .begin();
-
-        // WebGazer display settings
-        webgazer.showVideo(true);
-        webgazer.showFaceOverlay(true);
-        webgazer.showFaceFeedbackBox(true);
-        webgazer.showPredictionPoints(true);
-        webgazer.setStabilization(true);
-        // Do NOT mirror — mirroring shifts the dot off-target
-        webgazer.params.videoMirror = false;
-
-        // Wait for WebGazer to inject its DOM, then lock it to bottom-right
-        setTimeout(fixWebGazerDOM, 2000);
-        // Also hide loading overlay
-        setTimeout(() => {
-          document.getElementById('loadingOverlay').style.display = 'none';
-        }, 2500);
-
-      } catch (e) {
-        console.error('WebGazer failed:', e);
-        document.getElementById('loadingOverlay').style.display = 'none';
-      }
-    }
-
-    function fixWebGazerDOM() {
-      // Video container
-      const vc = document.getElementById('webgazerVideoContainer');
-      if (vc) {
-        // Force position via inline style (overrides WebGazer's own inline styles)
-        vc.setAttribute('style', [
-          'position:fixed', 'bottom:12px', 'right:12px',
-          'top:auto', 'left:auto',
-          'width:240px', 'height:180px',
-          'z-index:9999',
-          'border:3px solid #667eea',
-          'border-radius:12px',
-          'overflow:hidden',
-          'background:#000',
-          'box-shadow:0 4px 16px rgba(0,0,0,0.3)'
-        ].join('!important;') + '!important');
-
-        // Fix every child (video + canvases)
-        [...vc.children].forEach(child => {
-          child.setAttribute('style', [
-            'position:absolute', 'top:0', 'left:0',
-            'width:100%', 'height:100%',
-            'object-fit:cover',
-            'transform:none',
-            'pointer-events:none'
-          ].join('!important;') + '!important');
-        });
-      }
-
-      // Gaze prediction dot — make it bigger and more visible
-      const dot = document.getElementById('webgazerGazeDot');
-      if (dot) {
-        dot.setAttribute('style', [
-          'width:20px', 'height:20px',
-          'border-radius:50%',
-          'background:rgba(255,50,50,0.9)',
-          'box-shadow:0 0 12px 5px rgba(255,100,0,0.45)',
-          'position:fixed',
-          'pointer-events:none',
-          'z-index:10000'
-        ].join('!important;') + '!important');
-      }
-    }
-
-    window.addEventListener('load', () => setTimeout(initWebGazer, 600));
-
-    window.addEventListener('beforeunload', () => {
-      try { if (webgazer) webgazer.end(); } catch (e) {}
-    });
-
-    window.addEventListener('resize', () => { smoothX = null; smoothY = null; });
 
     function logout() {
-      try { if (webgazer) webgazer.end(); } catch (e) {}
-      auth.signOut().then(() => { window.location.href = 'login.html'; });
+      if (window.webgazer) try { webgazer.end(); } catch(e) {}
+      auth.signOut().then(() => { localStorage.clear(); window.location.href = 'login.html'; });
     }
   </script>
+
+  <script src="script.js"></script>
 </body>
 </html>
