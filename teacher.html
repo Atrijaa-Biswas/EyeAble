@@ -7,54 +7,120 @@
   <style>
     .wrap {
       position: relative; z-index: 1;
-      max-width: 860px; margin: 80px auto 40px;
-      padding: 0 24px;
+      max-width: 980px; margin: 80px auto 60px;
+      padding: 0 28px;
     }
 
     .section-label {
       font-family: 'Orbitron', monospace;
-      font-size: 11px; letter-spacing: 3px;
-      color: var(--cyan); text-transform: uppercase;
-      margin-bottom: 8px;
+      font-size: 11px; letter-spacing: 3px; color: var(--blue);
+      text-transform: uppercase; margin-bottom: 10px; margin-top: 32px;
     }
 
-    #questionInput {
-      width: 100%; padding: 14px 18px;
-      font-size: 17px; font-weight: 600;
-      resize: vertical; min-height: 80px;
-      margin-bottom: 14px;
+    /* stats */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    .stat-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; text-align: center;
+    }
+    .stat-box .num {
+      font-family: 'Orbitron', monospace; font-size: 32px; font-weight: 900;
+      color: var(--blue); text-shadow: 0 0 20px rgba(26,111,255,0.4);
+    }
+    .stat-box .lbl {
+      font-size: 12px; letter-spacing: 2px; color: var(--muted);
+      margin-top: 4px; text-transform: uppercase;
     }
 
-    .btn-row {
-      display: flex; gap: 12px; flex-wrap: wrap;
-      margin-bottom: 32px;
+    /* question box */
+    .q-send-row { display: flex; gap: 10px; align-items: flex-start; }
+    .q-send-row textarea {
+      flex: 1; min-height: 72px; resize: vertical; font-size: 16px;
+    }
+    .q-send-row button { align-self: flex-end; padding: 14px 28px; white-space: nowrap; }
+
+    .current-q-display {
+      background: rgba(26,111,255,0.07);
+      border: 1px solid var(--blue);
+      border-radius: 10px; padding: 12px 18px;
+      font-size: 15px; font-weight: 600; color: var(--text);
+      margin-top: 10px; display: none;
+    }
+    .current-q-display span {
+      font-family: 'Orbitron', monospace; font-size: 10px;
+      letter-spacing: 2px; color: var(--blue); margin-right: 10px;
     }
 
-    .answers-container { margin-top: 8px; }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
 
+    /* answers */
     #allAnswers { display: flex; flex-direction: column; gap: 10px; }
 
-    /* Answers section */
     .answer-card {
-      display: flex; flex-direction: column; gap: 4px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 6px 20px; align-items: start;
+    }
+    .ac-name {
+      font-family: 'Orbitron', monospace; font-size: 12px;
+      letter-spacing: 1px; color: var(--blue);
+    }
+    .ac-q   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .ac-text {
+      font-size: 22px; font-weight: 700; letter-spacing: 3px;
+      color: var(--text); margin-top: 6px;
+    }
+    .ac-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .grade-area {
+      grid-column: 2; grid-row: 1 / 5;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px; min-width: 110px;
+    }
+    .grade-display {
+      font-family: 'Orbitron', monospace; font-size: 30px; font-weight: 900;
+      color: var(--muted); min-height: 38px; text-align: center;
+      transition: color 0.3s;
+    }
+    .grade-display.graded { color: var(--blue); text-shadow: 0 0 16px rgba(26,111,255,0.5); }
+
+    .grade-input-row { display: flex; gap: 6px; }
+    .grade-input-row input {
+      width: 58px; padding: 6px 8px; font-size: 15px; font-weight: 700;
+      text-align: center; letter-spacing: 1px;
+    }
+    .grade-input-row button {
+      padding: 6px 10px; font-size: 12px; box-shadow: none;
     }
 
     .no-answers {
-      color: var(--muted); font-size: 14px;
-      font-family: 'Orbitron', monospace; letter-spacing: 2px;
-      padding: 20px 0; text-align: center;
+      color: var(--muted); font-family: 'Orbitron', monospace;
+      font-size: 12px; letter-spacing: 2px;
+      padding: 28px 0; text-align: center;
     }
 
-    /* live pulse dot */
     .live-dot {
-      display: inline-block; width: 8px; height: 8px;
-      border-radius: 50%; background: var(--blue);
-      box-shadow: 0 0 8px var(--blue);
-      margin-right: 6px; animation: pulse 1.6s infinite;
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--blue); box-shadow: 0 0 8px var(--blue);
+      margin-right: 6px; animation: blink 1.6s infinite;
     }
-    @keyframes pulse {
-      0%,100% { opacity:1; } 50% { opacity:0.3; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .filter-bar {
+      display: flex; gap: 10px; align-items: center;
+      margin-bottom: 14px; flex-wrap: wrap;
     }
+    .filter-bar select {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 7px 12px;
+      font-family: 'Rajdhani', sans-serif; font-size: 14px;
+      outline: none; cursor: pointer;
+    }
+    .filter-bar select:focus { border-color: var(--blue); }
+    .filter-lbl { font-size: 12px; color: var(--muted); letter-spacing: 1px; }
   </style>
 </head>
 <body>
@@ -69,29 +135,38 @@
     <h1>◈ Teacher Dashboard</h1>
 
     <!-- Stats -->
-    <div class="stats" id="stats">
-      <strong>◈ Statistics</strong><br>
-      Loading...
+    <div class="section-label">◈ Statistics</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="num" id="statStudents">0</div><div class="lbl">Students</div></div>
+      <div class="stat-box"><div class="num" id="statAnswers">0</div><div class="lbl">Answers</div></div>
+      <div class="stat-box"><div class="num" id="statGraded">0</div><div class="lbl">Graded</div></div>
     </div>
 
-    <!-- Question -->
+    <!-- Set Question -->
     <div class="section-label">◈ Set Question</div>
-    <textarea id="questionInput" placeholder="e.g. Type the word: CAT">Type the word: CAT</textarea>
+    <div class="q-send-row">
+      <textarea id="questionInput" placeholder="Type your question here..."></textarea>
+      <button onclick="sendQuestion()">▶ Send to Students</button>
+    </div>
+    <div class="current-q-display" id="currentQDisplay">
+      <span>● LIVE</span><span id="currentQText"></span>
+    </div>
+
     <div class="btn-row">
-      <button onclick="saveQuestion()">Save Question</button>
-      <button class="refresh-btn" onclick="loadAnswers()">↺ Refresh</button>
       <button class="clear-btn" onclick="clearAllAnswers()">✕ Clear All Answers</button>
     </div>
 
-    <!-- Latest answer -->
-    <div class="section-label">◈ Latest Answer</div>
-    <div class="student-answer" id="currentStudentAnswer">No answer yet</div>
-
-    <!-- All answers -->
-    <div class="answers-container">
-      <h2><span class="live-dot"></span>All Student Answers</h2>
-      <div id="allAnswers"><p class="no-answers">Loading...</p></div>
+    <!-- Answers -->
+    <div class="section-label" style="margin-top:36px">
+      <span class="live-dot"></span>Student Answers
     </div>
+    <div class="filter-bar">
+      <span class="filter-lbl">Student:</span>
+      <select id="filterS" onchange="renderAnswers()">
+        <option value="all">All Students</option>
+      </select>
+    </div>
+    <div id="allAnswers"><p class="no-answers">No answers yet</p></div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -99,7 +174,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
       apiKey: "AIzaSyAvOGMmLgbeZwpVpOAWeH5ilU077uOmz2s",
       authDomain: "eyeable-2026.firebaseapp.com",
       databaseURL: "https://eyeable-2026-default-rtdb.firebaseio.com",
@@ -109,133 +183,180 @@
       appId: "1:29944050006:web:33515697c3aac35432e6f7"
     };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
+    const auth     = firebase.auth();
+    const database = firebase.database();
 
-    // Wait for Firebase to restore session before acting on auth state.
-    // On cold page load, onAuthStateChanged fires once with null before
-    // the persisted session is resolved — we ignore that first null.
+    // Local cache — grading updates this directly so re-renders show correct data
+    let allAnswers = {};
+
+    // ── auth ──────────────────────────────────────────────
     let authResolved = false;
     auth.onAuthStateChanged(user => {
       if (!user) {
-        // If we haven't resolved yet, this is the cold-start null — wait briefly
         if (!authResolved) {
           authResolved = true;
-          // Give Firebase up to 3s to restore the session
-          setTimeout(() => {
-            if (!auth.currentUser) {
-              window.location.href = 'login.html';
-            }
-          }, 3000);
+          setTimeout(() => { if (!auth.currentUser) window.location.href = 'login.html'; }, 3000);
           return;
         }
-        // Genuine sign-out
         window.location.href = 'login.html';
         return;
       }
       authResolved = true;
       database.ref('users/' + user.uid).once('value').then(snap => {
         const data = snap.val();
-        if (!data || data.role !== 'teacher') {
-          auth.signOut();
-          window.location.href = 'login.html';
-          return;
-        }
+        if (!data || data.role !== 'teacher') { auth.signOut(); window.location.href = 'login.html'; return; }
         document.getElementById('userInfo').innerText = (data.name || user.email) + ' · Teacher';
-        loadExistingQuestion();
-        loadAnswers();
-        setupAnswersListener();
+        init();
       });
     });
 
-    function loadExistingQuestion() {
-      database.ref('currentQuestion').once('value').then(s => {
-        const q = s.val();
-        if (q) document.getElementById('questionInput').value = q;
-        else {
-          const saved = localStorage.getItem('question');
-          if (saved) document.getElementById('questionInput').value = saved;
-        }
-      });
-    }
-
-    function saveQuestion() {
-      const q = document.getElementById('questionInput').value;
-      database.ref('currentQuestion').set(q).then(() => {
-        localStorage.setItem('question', q);
-        alert('✅ Question saved: ' + q);
-      }).catch(() => alert('Error saving question.'));
-    }
-
-    function loadAnswers() {
-      database.ref('answers').orderByKey().limitToLast(1).once('value').then(snap => {
-        const answers = snap.val();
-        if (answers) {
-          const latest = answers[Object.keys(answers).pop()];
-          document.getElementById('currentStudentAnswer').innerText = latest.text || '—';
+    // ── init ──────────────────────────────────────────────
+    function init() {
+      // Load current question
+      database.ref('currentQuestion').on('value', snap => {
+        const q = snap.val();
+        const disp = document.getElementById('currentQDisplay');
+        const txt  = document.getElementById('currentQText');
+        if (q) {
+          txt.textContent = q;
+          disp.style.display = 'block';
+          document.getElementById('questionInput').value = q;
         } else {
-          document.getElementById('currentStudentAnswer').innerText = localStorage.getItem('answer') || 'No answer yet';
+          disp.style.display = 'none';
         }
       });
-      loadAllAnswers();
-      updateStats();
-    }
 
-    function loadAllAnswers() {
-      database.ref('answers').once('value').then(snap => {
-        const answers = snap.val();
-        const div = document.getElementById('allAnswers');
-        if (!answers) { div.innerHTML = '<p class="no-answers">No answers yet</p>'; return; }
-        const arr = Object.entries(answers)
-          .map(([k,v]) => ({id:k,...v}))
-          .sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
-        div.innerHTML = arr.map(a => {
-          const date = a.timestamp ? new Date(a.timestamp).toLocaleString() : '—';
-          const name = a.studentName || a.studentEmail || 'Unknown';
-          return `<div class="answer-card">
-            <strong>${name}</strong>
-            <p>${a.text || ''}</p>
-            <small>Submitted: ${date}</small>
-          </div>`;
-        }).join('');
-      }).catch(() => {
-        document.getElementById('allAnswers').innerHTML = '<p class="no-answers">Error loading answers</p>';
-      });
-    }
-
-    function updateStats() {
-      database.ref('answers').once('value').then(snap => {
-        const answers = snap.val();
-        const total = answers ? Object.keys(answers).length : 0;
-        const unique = new Set(answers ? Object.values(answers).map(a=>a.studentId).filter(Boolean) : []).size;
-        document.getElementById('stats').innerHTML =
-          `<strong>◈ Statistics</strong><br>
-           Total Answers: ${total} &nbsp;·&nbsp; Active Students: ${unique}`;
-      });
-    }
-
-    function setupAnswersListener() {
-      database.ref('answers').on('child_added', () => {
-        loadAllAnswers(); updateStats(); loadAnswers();
-      });
-    }
-
-    function clearAllAnswers() {
-      if (!confirm('Clear all answers? This cannot be undone.')) return;
-      database.ref('answers').remove().then(() => {
-        localStorage.removeItem('answer');
-        document.getElementById('currentStudentAnswer').innerText = 'No answer yet';
-        document.getElementById('allAnswers').innerHTML = '<p class="no-answers">No answers yet</p>';
+      // Real-time answers listener — skip re-render if grading is in progress
+      database.ref('answers').on('value', snap => {
+        const fresh = snap.val() || {};
+        // Preserve any grades we've already applied locally but Firebase hasn't confirmed yet
+        Object.keys(fresh).forEach(k => {
+          if (allAnswers[k] && allAnswers[k].grade != null && fresh[k].grade == null) {
+            fresh[k].grade = allAnswers[k].grade;
+          }
+        });
+        allAnswers = fresh;
+        renderAnswers();
         updateStats();
-        alert('✅ All answers cleared');
-      }).catch(() => alert('Error clearing answers.'));
+        updateFilters();
+      });
+    }
+
+    // ── send question ─────────────────────────────────────
+    function sendQuestion() {
+      const q = document.getElementById('questionInput').value.trim();
+      if (!q) { alert('Please type a question first.'); return; }
+      database.ref('currentQuestion').set(q);
+    }
+
+    // ── grade ─────────────────────────────────────────────
+    function submitGrade(answerId) {
+      const input = document.getElementById('gi-' + answerId);
+      if (!input) return;
+      const grade = input.value.trim();
+      if (!grade) return;
+
+      // 1. Update local cache immediately — this survives the next Firebase snapshot
+      if (!allAnswers[answerId]) return;
+      allAnswers[answerId].grade = grade;
+
+      // 2. Update card in-place — no full re-render needed
+      const disp = document.getElementById('gd-' + answerId);
+      if (disp) { disp.textContent = grade; disp.classList.add('graded'); }
+
+      // 3. Update stats immediately
+      updateStats();
+
+      // 4. Write to Firebase (triggers listener, but local cache already has grade so it's preserved)
+      const answer = allAnswers[answerId];
+      database.ref('answers/' + answerId + '/grade').set(grade).then(() => {
+        // Confirmed saved — push to student's grades node
+        if (answer.studentId) {
+          database.ref('grades/' + answer.studentId + '/' + answerId).set({
+            grade,
+            question:    answer.question    || '',
+            answer:      answer.text        || '',
+            studentName: answer.studentName || answer.studentEmail || '',
+            gradedAt:    Date.now()
+          });
+        }
+      });
+    }
+
+    // ── render answers ────────────────────────────────────
+    function renderAnswers() {
+      const div    = document.getElementById('allAnswers');
+      const filterS = document.getElementById('filterS').value;
+
+      let arr = Object.entries(allAnswers).map(([k,v]) => ({id:k,...v}));
+      if (filterS !== 'all') arr = arr.filter(a => (a.studentName||a.studentEmail) === filterS);
+      arr.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+
+      if (!arr.length) { div.innerHTML = '<p class="no-answers">No answers yet</p>'; return; }
+
+      div.innerHTML = arr.map(a => {
+        const name     = esc(a.studentName || a.studentEmail || 'Unknown');
+        const date     = a.timestamp ? new Date(a.timestamp).toLocaleString() : '—';
+        const qText    = esc(a.question || '—');
+        const gradeVal = a.grade != null ? esc(String(a.grade)) : '';
+        const graded   = a.grade != null;
+        return `
+        <div class="answer-card" id="ac-${a.id}">
+          <div>
+            <div class="ac-name">${name}</div>
+            <div class="ac-q">Q: ${qText}</div>
+            <div class="ac-text">${esc(a.text || '')}</div>
+            <div class="ac-time">${date}</div>
+          </div>
+          <div class="grade-area">
+            <div class="grade-display ${graded?'graded':''}" id="gd-${a.id}">${graded ? gradeVal : '—'}</div>
+            <div class="grade-input-row">
+              <input type="text" id="gi-${a.id}" placeholder="A+" maxlength="4" value="${gradeVal}"
+                onkeydown="if(event.key==='Enter') submitGrade('${a.id}')">
+              <button onclick="submitGrade('${a.id}')">✓</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── stats ─────────────────────────────────────────────
+    function updateStats() {
+      const arr      = Object.values(allAnswers);
+      const students = new Set(arr.map(a => a.studentId).filter(Boolean)).size;
+      const total    = arr.length;
+      const graded   = arr.filter(a => a.grade != null).length;
+      document.getElementById('statStudents').textContent = students;
+      document.getElementById('statAnswers').textContent  = total;
+      document.getElementById('statGraded').textContent   = graded;
+    }
+
+    // ── filters ───────────────────────────────────────────
+    function updateFilters() {
+      const arr   = Object.values(allAnswers);
+      const sSel  = document.getElementById('filterS');
+      const prevS = sSel.value;
+      const sSet  = [...new Set(arr.map(a => a.studentName || a.studentEmail).filter(Boolean))];
+      sSel.innerHTML = '<option value="all">All Students</option>' +
+        sSet.map(s => `<option value="${esc(s)}" ${prevS===s?'selected':''}>${esc(s)}</option>`).join('');
+    }
+
+    // ── misc ──────────────────────────────────────────────
+    function clearAllAnswers() {
+      if (!confirm('Clear ALL answers? This cannot be undone.')) return;
+      database.ref('answers').remove().then(() => {
+        allAnswers = {};
+        renderAnswers(); updateStats(); updateFilters();
+      });
     }
 
     function logout() {
       auth.signOut().then(() => { localStorage.clear(); window.location.href = 'login.html'; });
     }
 
-    setInterval(loadAnswers, 5000);
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
   </script>
 </body>
 </html>

@@ -9,11 +9,11 @@
       --card:    #0f2040;
       --blue:    #1a6fff;
       --blue2:   #0d47d4;
-      --cyan:    #00cfff;
+      --cyan:    #1a6fff;
       --text:    #e8f0ff;
       --muted:   #6b84b0;
-      --danger:  #ff3b5c;
-      --success: #00ffaa;
+      --danger:  #1a4aaa;
+      --success: #1a6fff;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,10 +45,10 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 20px; z-index: 1000;
     }
-    .logo { font-family:'Orbitron',monospace; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:2px; text-shadow:0 0 20px rgba(0,207,255,0.6); }
+    .logo { font-family:'Orbitron',monospace; font-size:18px; font-weight:900; color:var(--cyan); letter-spacing:2px; text-shadow:0 0 20px rgba(26,111,255,0.6); }
     .logo span { color:var(--blue); }
     #userInfo { font-size:12px; color:var(--muted); }
-    .logout-btn { background:transparent; color:var(--danger); border:1px solid var(--danger); padding:5px 14px; border-radius:6px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:1px; }
+    .logout-btn { background:transparent; color:var(--muted); border:1px solid var(--border); padding:5px 14px; border-radius:6px; font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:1px; }
     .logout-btn:hover { background:rgba(255,59,92,0.15); }
 
     /* ── answer bar (fixed at top below topbar) ── */
@@ -102,7 +102,7 @@
     }
     .key.active {
       border-color: var(--cyan);
-      box-shadow: 0 0 28px rgba(0,207,255,0.5), 0 0 60px rgba(0,207,255,0.15);
+      box-shadow: 0 0 28px rgba(26,111,255,0.5), 0 0 60px rgba(26,111,255,0.15);
       transform: scale(1.12);
       color: var(--cyan);
     }
@@ -127,7 +127,7 @@
       box-shadow: 0 0 8px var(--cyan);
       transition: width 0.05s linear;
     }
-    #submitBtn.gazing { box-shadow:0 0 40px rgba(0,207,255,0.6), 0 0 80px rgba(26,111,255,0.2); transform:translateX(-50%) scale(1.04); }
+    #submitBtn.gazing { box-shadow:0 0 40px rgba(26,111,255,0.6), 0 0 80px rgba(26,111,255,0.2); transform:translateX(-50%) scale(1.04); }
     .gaze-hint { display:block; font-size:9px; letter-spacing:1px; opacity:0.6; margin-top:3px; font-weight:400; }
 
     #clearBtn {
@@ -140,7 +140,7 @@
     /* debug */
     #dbg {
       position:fixed; bottom:12px; left:12px; z-index:99998;
-      background:rgba(5,13,26,0.9); color:#00ffaa;
+      background:rgba(0,0,0,0.92); color:#5599ff;
       font-family:'Courier New',monospace; font-size:11px;
       padding:8px 12px; border-radius:8px; border:1px solid rgba(0,255,170,0.2);
       line-height:1.8; pointer-events:none;
@@ -149,8 +149,8 @@
     /* gaze pointer */
     #gazePointer {
       position:fixed; width:70px; height:70px; border-radius:50%;
-      background:rgba(0,207,255,0.15); border:2px solid var(--cyan);
-      box-shadow:0 0 0 6px rgba(0,207,255,0.07), 0 0 24px rgba(0,207,255,0.4);
+      background:rgba(26,111,255,0.15); border:2px solid var(--cyan);
+      box-shadow:0 0 0 6px rgba(26,111,255,0.07), 0 0 24px rgba(26,111,255,0.4);
       pointer-events:none; z-index:99999; transform:translate(-50%,-50%);
       transition: left 0.06s linear, top 0.06s linear;
     }
@@ -167,9 +167,6 @@
       overflow:hidden !important; background:#000 !important;
       box-shadow:0 0 16px rgba(26,111,255,0.15) !important; z-index:9999 !important;
     }
-    .loading-box .spinner { font-size: 42px; margin-bottom: 12px; }
-    .loading-box p { color: #555; font-size: 16px; }
-    .loading-box small { color: #aaa; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -202,7 +199,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/webgazer@2.1.0/dist/webgazer.min.js"></script>
-
 
   <script>
     const firebaseConfig = {
@@ -245,6 +241,58 @@
       if (window.webgazer) try { webgazer.end(); } catch(e) {}
       auth.signOut().then(() => { localStorage.clear(); window.location.href = 'login.html'; });
     }
+
+    // ── real-time question + grade listeners ─────────────
+    // Called after auth is confirmed. Overrides script.js's one-time read
+    // by hijacking window.loadQuestion before script.js executes it.
+    function startRealtimeListeners(user) {
+      // Replace script.js's loadQuestion with a real-time version
+      // script.js calls loadQuestion() on window.load — by the time that
+      // fires, this override is already in place.
+      window.loadQuestion = function() {
+        database.ref('currentQuestion').on('value', snap => {
+          const q = snap.val();
+          const el = document.getElementById('questionText');
+          if (el) {
+            el.innerText = q || 'Waiting for question...';
+            if (q) localStorage.setItem('question', q);
+          }
+        });
+      };
+
+      // Listen for grades assigned to this student
+      database.ref('grades/' + user.uid).on('value', snap => {
+        const grades = snap.val();
+        if (!grades) return;
+        const arr = Object.values(grades).sort((a,b) => (b.gradedAt||0) - (a.gradedAt||0));
+        if (arr.length) showGradeNotif(arr[0]);
+      });
+    }
+
+    function showGradeNotif(g) {
+      let el = document.getElementById('gradeNotif');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'gradeNotif';
+        Object.assign(el.style, {
+          position:'fixed', top:'115px', right:'20px', zIndex:'99990',
+          background:'#0a1525', border:'1px solid rgba(26,111,255,0.5)',
+          borderRadius:'14px', padding:'16px 24px', textAlign:'center',
+          fontFamily:"'Orbitron',monospace",
+          boxShadow:'0 0 30px rgba(26,111,255,0.25)', minWidth:'140px'
+        });
+        document.body.appendChild(el);
+      }
+      el.innerHTML =
+        '<div style="font-size:10px;letter-spacing:2px;color:#4a6a9a;margin-bottom:6px">YOUR GRADE</div>' +
+        '<div style="font-size:40px;font-weight:900;color:#1a6fff;text-shadow:0 0 20px rgba(26,111,255,0.5)">' + g.grade + '</div>' +
+        '<div style="font-size:11px;color:#4a6a9a;margin-top:6px;max-width:120px;word-break:break-word">' + (g.question || '') + '</div>';
+    }
+
+    // Start listeners as soon as auth confirms the user
+    auth.onAuthStateChanged(user => {
+      if (user) startRealtimeListeners(user);
+    });
   </script>
 
   <script src="script.js"></script>
