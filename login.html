@@ -189,10 +189,8 @@
       <div class="input-group">
         <label>Confirm Password</label>
         <input type="password" id="signupConfirmPassword" placeholder="Repeat password">
-        <input type="password" id="signupConfirmPassword" placeholder="Repeat password">
       </div>
       <button class="auth-btn" onclick="signupWithEmail()">Create Account</button>
-      <div class="divider"><span>OR</span></div>
       <div class="divider"><span>OR</span></div>
       <button class="google-btn" onclick="loginWithGoogle()">
         <img src="https://www.google.com/favicon.ico" alt="G"> Sign up with Google
@@ -225,17 +223,25 @@
     function switchTab(tab) {
       currentForm = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelector('.' + tab + '-tab').classList.add('active');
+      const tabBtn = document.querySelector('.' + tab + '-tab');
+      if (tabBtn) tabBtn.classList.add('active');
+      else {
+        const all = document.querySelectorAll('.tab');
+        if (tab === 'login') all[0] && all[0].classList.add('active');
+        if (tab === 'signup') all[1] && all[1].classList.add('active');
+      }
       document.getElementById('loginForm').classList.toggle('active',  tab==='login');
       document.getElementById('signupForm').classList.toggle('active', tab==='signup');
-      setRole('student', tab);
+      // Preserve the currently selected role when switching tabs
+      setRole(selectedRole || 'student', tab);
     }
 
     function setRole(role, form) {
       selectedRole = role;
       const sel = form==='login' ? '#loginForm' : '#signupForm';
       document.querySelectorAll(sel + ' .role-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector(sel + ' .role-btn.' + role).classList.add('active');
+      const roleBtn = document.querySelector(sel + ' .role-btn.' + role);
+      if (roleBtn) roleBtn.classList.add('active');
     }
 
     async function signupWithEmail() {
@@ -338,6 +344,13 @@
     function hide(id)         { document.getElementById(id).style.display='none'; }
 
     setRole('student','login');
+
+    // If running from file://, Firebase auth (Google popup / some network requests)
+    // may fail in some browsers. Show a helpful note to the user.
+    if (window.location && window.location.protocol === 'file:') {
+      const sub = document.querySelector('.auth-sub');
+      if (sub) sub.innerText = sub.innerText + ' — Note: run a local server (http://localhost) for full auth functionality.';
+    }
   </script>
 </body>
 </html>
